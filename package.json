@@ -43,7 +43,12 @@
         },
         "akazas-love.scale": {
           "type": "string",
-          "enum": ["pentatonic", "major", "minor", "chromatic"],
+          "enum": [
+            "pentatonic",
+            "major",
+            "minor",
+            "chromatic"
+          ],
           "default": "pentatonic",
           "description": "Musical scale to use for typing sounds"
         }
@@ -54,11 +59,12 @@
     "efix": "eslint . --fix"
   },
   "dependencies": {
-    "@tonejs/midi": "^2.0.28"
+    "@tonejs/midi": "^2.0.28",
+    "speaker": "^0.5.5"
   },
   "devDependencies": {
-    "@types/vscode": "^1.104.0",
     "@types/node": "22.x",
+    "@types/vscode": "^1.104.0",
     "eslint": "^9.34.0"
   }
 }

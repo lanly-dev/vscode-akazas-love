@@ -1,7 +1,7 @@
 {
   "name": "akazas-love",
-  "displayName": "akaza's love",
-  "description": "",
+  "displayName": "Akaza's Love - Musical Typing",
+  "description": "Transform your typing into beautiful music with musical note sounds for each keystroke",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.104.0"
@@ -9,16 +9,52 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "akazas-love.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "akazas-love.toggleMusic",
+        "title": "Toggle Musical Typing",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.reloadMidi",
+        "title": "Reload MIDI Theme",
+        "category": "Akaza's Love"
+      }
+    ],
+    "configuration": {
+      "title": "Akaza's Love",
+      "properties": {
+        "akazas-love.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable musical typing sounds"
+        },
+        "akazas-love.volume": {
+          "type": "number",
+          "default": 0.1,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Volume level for musical notes (0.0 to 1.0)"
+        },
+        "akazas-love.scale": {
+          "type": "string",
+          "enum": ["pentatonic", "major", "minor", "chromatic"],
+          "default": "pentatonic",
+          "description": "Musical scale to use for typing sounds"
+        }
+      }
+    }
   },
   "scripts": {
     "efix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@tonejs/midi": "^2.0.28"
   },
   "devDependencies": {
     "@types/vscode": "^1.104.0",

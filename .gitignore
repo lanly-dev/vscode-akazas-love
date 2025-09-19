@@ -1,4 +1,4 @@
-node_modules
-.vscode-test/
-*.vsix
 .env
+*.vsix
+node_modules
+package-lock.json

@@ -2,15 +2,16 @@ const vscode = require('vscode')
 const { Midi } = require('@tonejs/midi')
 const fs = require('fs')
 const path = require('path')
+const Speaker = require('speaker')
 const MusicSynth = require('./MusicSynth')
 
 class MusicalTyping {
   #notes
   #currentNoteIdx
 
-  constructor(context, midiPath) {
+  constructor(context) {
     this.context = context
-    this.midiPath = midiPath
+    this.midiPath = path.join(this.context.extensionPath, 'media', `akaza's-love-theme.mid`)
 
     // Configuration
     this.enabled = true
@@ -116,18 +117,8 @@ class MusicalTyping {
 
   // Play individual note using MusicSynth
   async playIndividualNote(frequency, duration, options) {
-    try {
-      // For now, just log the note (since MusicSynth creates files)
-      // In a future version, we could use a lighter weight audio method
-      console.log(`Playing note: ${frequency.toFixed(2)}Hz, duration: ${duration.toFixed(2)}s, velocity: ${options.velocity}`)
-
-      // Visual feedback
-      const noteName = MusicalTyping.#frequencyToNoteName(frequency)
-      vscode.window.setStatusBarMessage(`♪ ${noteName}`, 800)
-
-    } catch (error) {
-      console.log('Error playing individual note:', error.message)
-    }
+    const noteName = MusicalTyping.#frequencyToNoteName(frequency)
+    vscode.window.setStatusBarMessage(`♪ ${noteName}`, 800)
   }
 
   // Convert frequency back to note name for display
@@ -151,15 +142,19 @@ class MusicalTyping {
     vscode.window.showInformationMessage('MIDI theme reloaded')
   }
 
-  // Play the full MIDI file using MusicSynth
-  async playFullMidiFile() {
-    try {
-      const midiPath = path.join(this.context.extensionPath, 'media', 'akaza\'s-love-theme.mid')
-      await MusicSynth.playMidiFile(midiPath)
-    } catch (error) {
-      vscode.window.showErrorMessage(`Failed to play MIDI file: ${error.message}`)
-    }
+  static async playMidiFile(midiPath) {
+    const buffer = await MusicSynth.getMidiFileBuffer(midiPath)
+    const speaker = new Speaker({
+      channels: 1,
+      bitDepth: 16,
+      sampleRate: 44100
+    })
+
+    speaker.write(buffer)
+    speaker.end()
   }
+
+
 }
 
 module.exports = MusicalTyping

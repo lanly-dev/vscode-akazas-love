@@ -1,5 +1,4 @@
 const fs = require('fs')
-const Speaker = require('speaker')
 const pkg = require('@tonejs/midi')
 const { Midi } = pkg
 
@@ -7,7 +6,7 @@ const SAMPLE_RATE = 44100
 
 class MusicSynth {
 
-  static #generateNote(frequency, duration, startTime, options = {}) {
+  static generateNote(frequency, duration, startTime, options = {}) {
 
     // --- Minimal detuning for cleaner sound ---
     const detuneCents = (Math.random() - 0.5) * 2  // Much less detuning
@@ -56,7 +55,7 @@ class MusicSynth {
     return result
   }
 
-  static async #getMidiFileBuffer(midiFilePath, options = {}) {
+  static async getMidiFileBuffer(midiFilePath, options = {}) {
     const midiData = fs.readFileSync(midiFilePath)
     const midi = new Midi(midiData)
 
@@ -119,9 +118,8 @@ class MusicSynth {
     allNotes.forEach((note, index) => {
       if (index % 50 === 0) console.log(`Processing note ${index + 1}/${allNotes.length}`)
 
-
       // Pass midiNote and velocity for waveform/volume selection
-      const noteResult = this.#generateNote(
+      const noteResult = this.generateNote(
         note.frequency,
         note.duration,
         note.startTime,
@@ -143,18 +141,6 @@ class MusicSynth {
       }
     })
     return finalBuffer
-  }
-
-  static async playMidiFile(midiPath) {
-    const buffer = await this.#getMidiFileBuffer(midiPath)
-    const speaker = new Speaker({
-      channels: 1,
-      bitDepth: 16,
-      sampleRate: 44100
-    })
-
-    speaker.write(buffer)
-    speaker.end()
   }
 
 }

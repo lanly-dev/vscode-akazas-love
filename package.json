@@ -40,17 +40,6 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Volume level for musical notes (0.0 to 1.0)"
-        },
-        "akazas-love.scale": {
-          "type": "string",
-          "enum": [
-            "pentatonic",
-            "major",
-            "minor",
-            "chromatic"
-          ],
-          "default": "pentatonic",
-          "description": "Musical scale to use for typing sounds"
         }
       }
     }

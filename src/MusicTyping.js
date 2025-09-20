@@ -47,7 +47,6 @@ class MusicalTyping {
           velocity: note.velocity * 1.5
         })
       })
-
       // Group notes by their exact time for proper chord detection
       const timeMap = {}
       allNotes.forEach(note => {
@@ -58,7 +57,7 @@ class MusicalTyping {
 
       // Sort time frames and create note sequence with chord scaling (like index.html)
       const timeFrames = Object.keys(timeMap).map(Number).sort((a, b) => a - b)
-      this.notes = timeFrames.map(t => {
+      this.#notes = timeFrames.map(t => {
         const chordNotes = timeMap[t]
         const chordSize = chordNotes.length
         // Apply chord scaling to each note
@@ -68,7 +67,7 @@ class MusicalTyping {
         }))
       })
 
-      console.log(`Loaded MIDI file with ${this.notes.length} note groups`)
+      console.log(`Loaded MIDI file with ${this.#notes.length} note groups`)
     })
   }
 
@@ -78,8 +77,8 @@ class MusicalTyping {
       if (this.enabled && event.contentChanges.length > 0) {
         // Only play sound for actual typing (not large pastes)
         const change = event.contentChanges[0]
-        if (change && change.text.length === 1 && change.text !== '\n') return
-        this.playSound(change.text)
+        if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
+        this.playMidiNotes(change.text)
       }
     })
 
@@ -93,7 +92,6 @@ class MusicalTyping {
 
   playMidiNotes() {
     if (this.#currentNoteIdx >= this.#notes.length) this.#currentNoteIdx = 0 // Loop back to beginning
-
     const chordNotes = this.#notes[this.#currentNoteIdx]
 
     // Play each note separately
@@ -148,7 +146,7 @@ class MusicalTyping {
   }
 
   async reloadMidi() {
-    this.currentNoteIdx = 0
+    this.#currentNoteIdx = 0
     await this.loadMidiFile()
     vscode.window.showInformationMessage('MIDI theme reloaded')
   }

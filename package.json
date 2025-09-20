@@ -16,8 +16,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "akazas-love.toggleMusic",
-        "title": "Toggle Musical Typing",
+        "command": "akazas-love.playSong",
+        "title": "Play Akaza's Love Theme",
         "category": "Akaza's Love"
       },
       {

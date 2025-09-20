@@ -117,8 +117,15 @@ class MusicalTyping {
 
   // Play individual note using MusicSynth
   async playIndividualNote(frequency, duration, options) {
-    const noteName = MusicalTyping.#frequencyToNoteName(frequency)
-    vscode.window.setStatusBarMessage(`♪ ${noteName}`, 800)
+      // Generate the note audio buffer using MusicSynth
+      const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
+      
+      // Extract the buffer from the result object
+      MusicalTyping.sendToSpeaker(noteResult.buffer)
+      
+      // Visual feedback
+      const noteName = MusicalTyping.#frequencyToNoteName(frequency)
+      vscode.window.setStatusBarMessage(`♪ ${noteName}`, 800)
   }
 
   // Convert frequency back to note name for display
@@ -143,18 +150,18 @@ class MusicalTyping {
   }
 
   static async playMidiFile(midiPath) {
-    const buffer = await MusicSynth.getMidiFileBuffer(midiPath)
+    this.sendToSpeaker(await MusicSynth.getMidiFileBuffer(midiPath))
+  }
+
+  static sendToSpeaker(buffer) {
     const speaker = new Speaker({
       channels: 1,
       bitDepth: 16,
       sampleRate: 44100
     })
-
     speaker.write(buffer)
     speaker.end()
   }
-
-
 }
 
 module.exports = MusicalTyping

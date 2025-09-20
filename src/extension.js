@@ -18,12 +18,10 @@ function activate(context) {
   // The commandId parameter must match the command field in package.json
   const disposable = vscode.commands.registerCommand('akazas-love.playSong', function () {
     // The code you place here will be executed every time your command is executed
-
-    // Display a message box to the user
-    vscode.window.showInformationMessage(`Hello World from akaza's love!`)
     const midiPath = path.join(context.extensionPath, 'media', 'akaza\'s-love-theme.mid')
     MusicSynth.playMidiFile(midiPath)
   })
+
 
   context.subscriptions.push(disposable)
 }

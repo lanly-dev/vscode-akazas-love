@@ -11,10 +11,7 @@ async function activate(context) {
 
   const midiPath = path.join(context.extensionPath, 'media', 'akaza\'s-love-theme.mid')
   const rc = vscode.commands.registerCommand
-  const d1 = rc('akazas-love.playSong', () => {
-    MusicSynth.playMidiFile(midiPath)
-  })
-
+  const d1 = rc('akazas-love.playSong', () => MusicSynth.playMidiFile(midiPath))
   if (!Speaker.binaryReady) await Speaker.downloadPlayBuffer(context)
 
   new MusicTyping(context, midiPath)
@@ -24,7 +21,4 @@ async function activate(context) {
 // This method is called when your extension is deactivated
 function deactivate() { }
 
-module.exports = {
-  activate,
-  deactivate
-}
+module.exports = { activate, deactivate }

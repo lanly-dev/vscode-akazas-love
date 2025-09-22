@@ -27,31 +27,21 @@ class MusicSynth {
     const samples = Math.floor(SAMPLE_RATE * playDuration)
     const startSample = Math.floor(SAMPLE_RATE * startTime)
     const result = { samples, startSample, frequency: freqDetuned, duration: playDuration, options }
-    result.buffer = Buffer.alloc(samples * 2) // 16-bit mono
-
+    // Output Float32Array PCM (mono, -1.0 to 1.0)
+    result.floatBuffer = new Float32Array(samples)
     for (let i = 0; i < samples; i++) {
       const t = i / SAMPLE_RATE
-
-      // Browser-like envelope: quick attack, then linear ramp down
       let envelope = 0
-      if (t <= attack) envelope = t / attack  // Quick attack
+      if (t <= attack) envelope = t / attack
       else {
-        // Linear ramp to zero (like browser linearRampToValueAtTime)
         const releasePhase = (t - attack) / (playDuration - attack)
         envelope = 1 - releasePhase
       }
       envelope = Math.max(0, envelope)
-
-      // Triangle oscillator (consistent with browser)
       const oscillatorValue = (2 / Math.PI) * Math.asin(Math.sin(2 * Math.PI * freqDetuned * t))
-
-      // Apply envelope and volume
       let amplitude = oscillatorValue * envelope * volume
-
-      const int16 = Math.floor(amplitude * 32767)
-      result.buffer.writeInt16LE(int16, i * 2)
+      result.floatBuffer[i] = amplitude
     }
-
     return result
   }
 

@@ -2,7 +2,7 @@ const vscode = require('vscode')
 const { Midi } = require('@tonejs/midi')
 const fs = require('fs')
 const path = require('path')
-const Speaker = require('speaker')
+const Speaker = require('./Speaker')
 const MusicSynth = require('./MusicSynth')
 
 class MusicalTyping {
@@ -117,11 +117,12 @@ class MusicalTyping {
 
   // Play individual note using MusicSynth
   async playIndividualNote(frequency, duration, options) {
-      // Generate the note audio buffer using MusicSynth
-      const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
-      
-      // Extract the buffer from the result object
-      MusicalTyping.sendToSpeaker(noteResult.buffer)
+  // Generate the note audio buffer using MusicSynth
+  const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
+  // Convert Float32Array to Buffer for play-buffer
+  const floatBuf = noteResult.floatBuffer
+  const pcmBuffer = Buffer.from(new Uint8Array(floatBuf.buffer, floatBuf.byteOffset, floatBuf.byteLength))
+  MusicalTyping.sendToSpeaker(pcmBuffer)
       
       // Visual feedback
       const noteName = MusicalTyping.#frequencyToNoteName(frequency)
@@ -154,13 +155,7 @@ class MusicalTyping {
   }
 
   static sendToSpeaker(buffer) {
-    const speaker = new Speaker({
-      channels: 1,
-      bitDepth: 16,
-      sampleRate: 44100
-    })
-    speaker.write(buffer)
-    speaker.end()
+  Speaker.sendToSpeaker(buffer)
   }
 }
 

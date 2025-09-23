@@ -117,16 +117,17 @@ class MusicalTyping {
 
   // Play individual note using MusicSynth
   async playIndividualNote(frequency, duration, options) {
-  // Generate the note audio buffer using MusicSynth
-  const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
-  // Convert Float32Array to Buffer for play-buffer
-  const floatBuf = noteResult.floatBuffer
-  const pcmBuffer = Buffer.from(new Uint8Array(floatBuf.buffer, floatBuf.byteOffset, floatBuf.byteLength))
-  MusicalTyping.sendToSpeaker(pcmBuffer)
-      
-      // Visual feedback
-      const noteName = MusicalTyping.#frequencyToNoteName(frequency)
-      vscode.window.setStatusBarMessage(`♪ ${noteName}`, 800)
+    // Generate the note audio buffer using MusicSynth
+    const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
+    // Convert Float32Array to Buffer for play-buffer
+    const floatBuf = noteResult.floatBuffer
+    const pcmBuffer = Buffer.from(new Uint8Array(floatBuf.buffer, floatBuf.byteOffset, floatBuf.byteLength))
+    // Speaker.sendToSpeaker(pcmBuffer)
+    Speaker.sendToStreamSpeaker(pcmBuffer)
+
+    // Visual feedback
+    const noteName = MusicalTyping.#frequencyToNoteName(frequency)
+    vscode.window.setStatusBarMessage(`♪ ${noteName}`, 800)
   }
 
   // Convert frequency back to note name for display
@@ -151,11 +152,8 @@ class MusicalTyping {
   }
 
   static async playMidiFile(midiPath) {
-    this.sendToSpeaker(await MusicSynth.getMidiFileBuffer(midiPath))
-  }
-
-  static sendToSpeaker(buffer) {
-  Speaker.sendToSpeaker(buffer)
+    // Speaker.sendToSpeaker(await MusicSynth.getMidiFileBuffer(midiPath))
+    Speaker.sendToStreamSpeaker(await MusicSynth.getMidiFileBuffer(midiPath))
   }
 }
 

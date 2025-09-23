@@ -8,6 +8,7 @@ class Speaker {
   static binaryPath = null
   static binaryReady = false
   static binaryDownloading = false
+  static persistentProcess = null
 
   static async downloadPlayBuffer(context, force = false) {
     if (Speaker.binaryReady && !force) return
@@ -60,9 +61,8 @@ class Speaker {
         if (attempt > 5) return reject(new Error('Too many redirects'))
         https.get(url, (response) => {
           // Handle redirect
-          if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location)
             return resolve(downloadWithRedirect(response.headers.location, attempt + 1))
-          }
           if (response.statusCode !== 200) {
             let errorBody = ''
             response.on('data', chunk => errorBody += chunk)
@@ -96,13 +96,47 @@ class Speaker {
             resolve()
           })
         }).on('error', (err) => {
-          try { fs.unlinkSync(Speaker.binaryPath) } catch {}
           Speaker.binaryDownloading = false
           reject(err)
         })
       })
     }
     await downloadWithRedirect(asset.browser_download_url)
+  }
+
+  static startPersistentProcess() {
+    // Only supported on Windows for now
+    if (process.platform !== 'win32') return
+    if (Speaker.persistentProcess && !Speaker.persistentProcess.killed) return
+    if (!Speaker.binaryPath || !fs.existsSync(Speaker.binaryPath)) return
+    try {
+      Speaker.persistentProcess = spawn(Speaker.binaryPath, ['--stream-blocking'], {
+        stdio: ['pipe', 'ignore', 'ignore']
+      })
+      Speaker.persistentProcess.on('error', (err) => {
+        console.error('play-buffer process error:', err)
+        vscode.window.showWarningMessage('play-buffer process error: ' + err.message)
+        Speaker.persistentProcess = null
+        Speaker.pumpRunning = false
+      })
+      Speaker.persistentProcess.on('exit', () => {
+        Speaker.persistentProcess = null
+        Speaker.pumpRunning = false
+      })
+    } catch (e) {
+      console.error('Failed to start play-buffer process:', e)
+      vscode.window.showWarningMessage('Failed to start play-buffer process: ' + e.message)
+    }
+  }
+
+  static stopPersistentProcess() {
+    if (Speaker.persistentProcess && !Speaker.persistentProcess.killed) {
+      try { Speaker.persistentProcess.stdin.end() } catch { }
+      try { Speaker.persistentProcess.kill() } catch { }
+    }
+    Speaker.persistentProcess = null
+    Speaker.pumpRunning = false
+    Speaker.activeNotes = []
   }
 
   static sendToSpeaker(buffer) {
@@ -135,9 +169,8 @@ class Speaker {
       }
     })
     // Optionally, warn if buffer length is suspiciously small
-    if (buffer.length < expectedSampleRate * expectedChannels * (expectedBitDepth / 8) * 0.1) {
+    if (buffer.length < expectedSampleRate * expectedChannels * (expectedBitDepth / 8) * 0.1)
       vscode.window.showWarningMessage('PCM buffer is very short (less than 0.1s)')
-    }
     try {
       const playProcess = spawn(Speaker.binaryPath, [], {
         stdio: ['pipe', 'ignore', 'ignore']
@@ -150,6 +183,27 @@ class Speaker {
       })
     } catch (e) {
       vscode.window.showWarningMessage('Failed to play buffer: ' + e.message)
+      console.error('Speaker.sendToSpeaker catch error:', e)
+    }
+  }
+
+  static sendToStreamSpeaker(buffer) {
+    if (!Speaker.binaryPath || !fs.existsSync(Speaker.binaryPath)) {
+      vscode.window.showWarningMessage('play-buffer binary not found or not downloaded')
+      return
+    }
+    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+      console.warn('Speaker.sendToSpeaker: Invalid buffer', buffer)
+      return
+    }
+    try {
+      const playProcess = spawn(Speaker.binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore'] })
+      playProcess.stdin.write(buffer)
+      playProcess.stdin.end()
+      playProcess.on('error', (err) => {
+        console.error('Speaker.sendToSpeaker spawn error:', err)
+      })
+    } catch (e) {
       console.error('Speaker.sendToSpeaker catch error:', e)
     }
   }

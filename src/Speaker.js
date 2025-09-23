@@ -7,6 +7,7 @@ const { spawn } = require('child_process')
 const PLAY_BUFFER_MODE = '--stream-blocking'
 
 class Speaker {
+  static CHUNK_SIZE = 512 // bytes
   static binaryPath = null
   static binaryReady = false
   static binaryDownloading = false
@@ -198,15 +199,19 @@ class Speaker {
       console.warn('Speaker.sendToSpeaker: Invalid buffer', buffer)
       return
     }
+    // Ensure persistent process is running
+    Speaker.startPersistentProcess()
+    if (!Speaker.persistentProcess || Speaker.persistentProcess.killed) {
+      vscode.window.showWarningMessage('Persistent play-buffer process is not running')
+      return
+    }
     try {
-      const playProcess = spawn(Speaker.binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore'] })
-      playProcess.stdin.write(buffer)
-      playProcess.stdin.end()
-      playProcess.on('error', (err) => {
-        console.error('Speaker.sendToSpeaker spawn error:', err)
-      })
+      for (let i = 0; i < buffer.length; i += Speaker.CHUNK_SIZE) {
+        const chunk = buffer.slice(i, i + Speaker.CHUNK_SIZE)
+        Speaker.persistentProcess.stdin.write(chunk)
+      }
     } catch (e) {
-      console.error('Speaker.sendToSpeaker catch error:', e)
+      console.error('Speaker.sendToStreamSpeaker error:', e)
     }
   }
 }

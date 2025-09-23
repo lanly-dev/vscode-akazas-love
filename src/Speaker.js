@@ -1,8 +1,10 @@
 const vscode = require('vscode')
 const fs = require('fs')
 const path = require('path')
-const https = require('https')
+const { https } = require('follow-redirects')
 const { spawn } = require('child_process')
+
+const PLAY_BUFFER_MODE = '--stream-blocking'
 
 class Speaker {
   static binaryPath = null
@@ -12,7 +14,10 @@ class Speaker {
 
   static async downloadPlayBuffer(context, force = false) {
     if (Speaker.binaryReady && !force) return
-    if (Speaker.binaryDownloading) return
+    if (Speaker.binaryDownloading) {
+      vscode.window.showWarningMessage('play-buffer binary is downloading')
+      return
+    }
     Speaker.binaryDownloading = true
     const platform = process.platform
     let assetSuffix = ''
@@ -31,14 +36,12 @@ class Speaker {
         let data = ''
         res.on('data', chunk => data += chunk)
         res.on('end', () => {
-          try {
-            resolve(JSON.parse(data))
-          } catch (e) {
-            reject(e)
-          }
+          try { resolve(JSON.parse(data)) }
+          catch (e) { reject(e) }
         })
       }).on('error', reject)
     })
+
     // Find correct asset for platform
     const asset = releaseInfo.assets.find(a => a.name.endsWith(assetSuffix))
     if (!asset) {
@@ -46,62 +49,63 @@ class Speaker {
       Speaker.binaryDownloading = false
       throw new Error('No compatible binary')
     }
+
     Speaker.binaryPath = path.join(context.extensionPath, 'bin', asset.name)
     const binDir = path.dirname(Speaker.binaryPath)
     if (!fs.existsSync(binDir)) fs.mkdirSync(binDir, { recursive: true })
     if (fs.existsSync(Speaker.binaryPath)) {
       Speaker.binaryReady = true
       Speaker.binaryDownloading = false
+      vscode.window.showInformationMessage('play-buffer binary downloaded')
       return
     }
-    // Download asset
-    // Helper to follow redirects
-    function downloadWithRedirect(url, attempt = 0) {
-      return new Promise((resolve, reject) => {
-        if (attempt > 5) return reject(new Error('Too many redirects'))
-        https.get(url, (response) => {
-          // Handle redirect
-          if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location)
-            return resolve(downloadWithRedirect(response.headers.location, attempt + 1))
-          if (response.statusCode !== 200) {
-            let errorBody = ''
-            response.on('data', chunk => errorBody += chunk)
-            response.on('end', () => {
-              vscode.window.showWarningMessage('Failed to download play-buffer binary: ' + response.statusCode)
-              console.error('Download error body:', errorBody)
-              Speaker.binaryDownloading = false
-              reject(new Error('Download failed: ' + response.statusCode))
-            })
-            return
-          }
-          const contentType = response.headers['content-type']
-          if (!contentType || !contentType.includes('application/octet-stream')) {
-            let errorBody = ''
-            response.on('data', chunk => errorBody += chunk)
-            response.on('end', () => {
-              vscode.window.showWarningMessage('Downloaded file is not a binary. Content-Type: ' + contentType)
-              console.error('Non-binary download body:', errorBody)
-              Speaker.binaryDownloading = false
-              reject(new Error('Non-binary file: ' + contentType))
-            })
-            return
-          }
-          const file = fs.createWriteStream(Speaker.binaryPath)
-          response.pipe(file)
-          file.on('finish', () => {
-            file.close()
-            if (platform !== 'win32') fs.chmodSync(Speaker.binaryPath, '755')
-            Speaker.binaryReady = true
+    // Download the asset (auto-follows redirects)
+    await new Promise((resolve, reject) => {
+      https.get(asset.browser_download_url, (response) => {
+        if (response.statusCode !== 200) {
+          let errorBody = ''
+          response.on('data', chunk => errorBody += chunk)
+          response.on('end', () => {
+            vscode.window.showWarningMessage('Failed to download play-buffer binary: ' + response.statusCode)
+            console.error('Download error body:', errorBody)
             Speaker.binaryDownloading = false
-            resolve()
+            reject(new Error('Download failed: ' + response.statusCode))
           })
-        }).on('error', (err) => {
+          return
+        }
+        const contentType = response.headers['content-type'] || ''
+        // Accept typical binary content types; GitHub may omit or vary
+        const isBinary = contentType.includes('octet-stream') || contentType.includes('binary') || contentType === ''
+        if (!isBinary) {
+          let errorBody = ''
+          response.on('data', chunk => errorBody += chunk)
+          response.on('end', () => {
+            vscode.window.showWarningMessage('Downloaded file is not a binary. Content-Type: ' + contentType)
+            console.error('Non-binary download body:', errorBody)
+            Speaker.binaryDownloading = false
+            reject(new Error('Non-binary file: ' + contentType))
+          })
+          return
+        }
+        const file = fs.createWriteStream(Speaker.binaryPath)
+        response.pipe(file)
+        file.on('finish', () => {
+          file.close()
+          try { if (platform !== 'win32') fs.chmodSync(Speaker.binaryPath, '755') } catch {}
+          Speaker.binaryReady = true
+          Speaker.binaryDownloading = false
+          vscode.window.showInformationMessage('play-buffer binary downloaded')
+          resolve()
+        })
+        file.on('error', (err) => {
           Speaker.binaryDownloading = false
           reject(err)
         })
+      }).on('error', (err) => {
+        Speaker.binaryDownloading = false
+        reject(err)
       })
-    }
-    await downloadWithRedirect(asset.browser_download_url)
+    })
   }
 
   static startPersistentProcess() {
@@ -110,18 +114,16 @@ class Speaker {
     if (Speaker.persistentProcess && !Speaker.persistentProcess.killed) return
     if (!Speaker.binaryPath || !fs.existsSync(Speaker.binaryPath)) return
     try {
-      Speaker.persistentProcess = spawn(Speaker.binaryPath, ['--stream-blocking'], {
+      Speaker.persistentProcess = spawn(Speaker.binaryPath, [PLAY_BUFFER_MODE], {
         stdio: ['pipe', 'ignore', 'ignore']
       })
       Speaker.persistentProcess.on('error', (err) => {
         console.error('play-buffer process error:', err)
         vscode.window.showWarningMessage('play-buffer process error: ' + err.message)
         Speaker.persistentProcess = null
-        Speaker.pumpRunning = false
       })
       Speaker.persistentProcess.on('exit', () => {
         Speaker.persistentProcess = null
-        Speaker.pumpRunning = false
       })
     } catch (e) {
       console.error('Failed to start play-buffer process:', e)

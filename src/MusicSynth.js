@@ -45,6 +45,30 @@ class MusicSynth {
     return result
   }
 
+  // Generate a note into a Float32Array [-1..1]
+  static generateNotePCMFloat32(frequency, duration, startTime, options = {}) {
+    return this.generateNote(frequency, duration, startTime, options)
+  }
+
+  // Generate a note into an Int16Array [-32768..32767]
+  static generateNotePCM16(frequency, duration, startTime, options = {}) {
+    const note = this.generateNote(frequency, duration, startTime, options)
+    const f = note.floatBuffer
+    const len = f.length
+    const int16 = new Int16Array(len)
+    // Apply gentle headroom and TPDF dithering during conversion
+    const headroom = 0.97 // small headroom to avoid hard clipping
+    for (let i = 0; i < len; i++) {
+      // TPDF dither: sum of two uniform noises in [-0.5,0.5] scaled to LSB
+      const dither = (Math.random() - 0.5 + Math.random() - 0.5) * (1 / 32767)
+      let v = f[i] * headroom + dither
+      if (v > 1) v = 1
+      else if (v < -1) v = -1
+      int16[i] = v * 32767
+    }
+    return { ...note, int16Buffer: int16 }
+  }
+
   static async getMidiFileBuffer(midiFilePath, options = {}) {
     const midiData = fs.readFileSync(midiFilePath)
     const midi = new Midi(midiData)
@@ -101,14 +125,12 @@ class MusicSynth {
       note.chordScale = 1 / chordSize  // Volume scaling for chords
     })
 
-    // Create final audio buffer
-    const finalBuffer = Buffer.alloc(totalSamples * 2)
+    // Create final audio buffer as Int16Array and initialize to zeros
+    const finalMix = new Float32Array(totalSamples).fill(0)
 
     // Generate and mix all notes
     allNotes.forEach((note, index) => {
       if (index % 50 === 0) console.log(`Processing note ${index + 1}/${allNotes.length}`)
-
-      // Pass midiNote and velocity for waveform/volume selection
       const noteResult = this.generateNote(
         note.frequency,
         note.duration,
@@ -117,20 +139,38 @@ class MusicSynth {
           ...options,
           midiNote: note.midiNote,
           velocity: note.velocity,
-          chordScale: note.chordScale  // Apply chord volume scaling
+          chordScale: note.chordScale
         }
       )
-
-      // Mix into final buffer
       const startSample = Math.floor(note.startTime * SAMPLE_RATE)
       for (let i = 0; i < noteResult.samples && startSample + i < totalSamples; i++) {
-        const existingValue = finalBuffer.readInt16LE((startSample + i) * 2)
-        const newValue = noteResult.buffer.readInt16LE(i * 2)
-        const mixed = Math.max(-32768, Math.min(32767, existingValue + newValue))
-        finalBuffer.writeInt16LE(mixed, (startSample + i) * 2)
+        finalMix[startSample + i] += noteResult.floatBuffer[i]
+        // Clamp to -1.0..1.0
+        finalMix[startSample + i] = Math.max(-1.0, Math.min(1.0, finalMix[startSample + i]))
       }
     })
-    return finalBuffer
+
+    // diagnostics removed
+
+    // Apply a gentle soft clip and headroom before converting to Int16 to reduce harsh clipping
+    const headroom = 0.97
+    for (let i = 0; i < totalSamples; i++) {
+      // soft clip using tanh-like curve; approx with Math.tanh for simplicity
+      const x = finalMix[i] * headroom
+      finalMix[i] = Math.tanh(x)
+    }
+    // Convert Float32Array to Int16Array for output with TPDF dithering
+    const finalBuffer = new Int16Array(totalSamples)
+    for (let i = 0; i < totalSamples; i++) {
+      const dither = (Math.random() - 0.5 + Math.random() - 0.5) * (1 / 32767)
+      let v = finalMix[i] + dither
+      if (v > 1) v = 1
+      else if (v < -1) v = -1
+      finalBuffer[i] = v * 32767
+    }
+    // Convert Int16Array to Buffer for NativeSpeaker
+    const outBuf = Buffer.from(finalBuffer.buffer)
+    return outBuf
   }
 
 }

@@ -40,6 +40,12 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Volume level for musical notes (0.0 to 1.0)"
+        },
+        "akazas-love.output": {
+          "type": "string",
+          "enum": ["native", "portaudio"],
+          "default": "portaudio",
+          "description": "Choose audio output backend: 'native' uses the Node speaker module; 'portaudio' uses the external play-buffer binary"
         }
       }
     }

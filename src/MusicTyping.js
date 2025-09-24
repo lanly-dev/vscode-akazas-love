@@ -3,6 +3,7 @@ const { Midi } = require('@tonejs/midi')
 const fs = require('fs')
 const path = require('path')
 const Speaker = require('./Speaker')
+const NativeSpeaker = require('./NativeSpeaker')
 const MusicSynth = require('./MusicSynth')
 
 class MusicalTyping {
@@ -15,7 +16,8 @@ class MusicalTyping {
 
     // Configuration
     this.enabled = true
-    this.volume = 0.1
+  this.volume = 0.1
+  this.output = 'native' // 'native' | 'portaudio'
 
     this.#notes = []
     this.#currentNoteIdx = 0
@@ -29,6 +31,7 @@ class MusicalTyping {
     const config = vscode.workspace.getConfiguration('akazas-love')
     this.enabled = config.get('enabled', true)
     this.volume = config.get('volume', 0.1)
+    this.output = config.get('output', 'native')
   }
 
   async #loadMidiFile() {
@@ -86,7 +89,7 @@ class MusicalTyping {
     // Listen for configuration changes
     const configDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
       if (!event.affectsConfiguration('akazas-love')) return
-      this.loadConfiguration()
+      this.#loadConfiguration()
     })
     this.context.subscriptions.push(changeDisposable, configDisposable)
   }
@@ -98,7 +101,7 @@ class MusicalTyping {
     // Play each note separately
     chordNotes.forEach(note => {
       // Use minimum duration for consistent overlapping
-      const playDuration = Math.max(note.duration, 0.7)
+      const playDuration = Math.max(note.duration, .3)
 
       // Create a single note "song" for MusicSynth to play
       this.playIndividualNote(note.frequency, playDuration, {
@@ -117,14 +120,17 @@ class MusicalTyping {
 
   // Play individual note using MusicSynth
   async playIndividualNote(frequency, duration, options) {
-    // Generate the note audio buffer using MusicSynth
-    const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
-    // Convert Float32Array to Buffer for play-buffer
-    const floatBuf = noteResult.floatBuffer
-    const pcmBuffer = Buffer.from(new Uint8Array(floatBuf.buffer, floatBuf.byteOffset, floatBuf.byteLength))
-    // Speaker.sendToSpeaker(pcmBuffer)
-    // Speaker.sendToStreamSpeaker(pcmBuffer)
-    Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
+    if (this.output === 'native') {
+      // Generate the note audio buffer using MusicSynth (PCM16 for NativeSpeaker)
+      const noteResult = MusicSynth.generateNotePCM16(frequency, duration, 0, options)
+      const pcmBuffer = Buffer.from(noteResult.int16Buffer.buffer)
+      NativeSpeaker.sendMultipleStreamsSpeaker(pcmBuffer)
+    } else {
+      // PortAudio path: stream via play-buffer binary (expects Int16)
+      const noteResult = MusicSynth.generateNotePCM16(frequency, duration, 0, options)
+      const pcmBuffer = Buffer.from(noteResult.int16Buffer.buffer)
+      Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
+    }
 
     // Visual feedback
     const noteName = MusicalTyping.#frequencyToNoteName(frequency)
@@ -153,7 +159,7 @@ class MusicalTyping {
   }
 
   static async playMidiFile(midiPath) {
-    // Speaker.sendToSpeaker(await MusicSynth.getMidiFileBuffer(midiPath))
+    // This static method doesn't have instance config; default to portaudio for full-file playback
     Speaker.sendToStreamSpeaker(await MusicSynth.getMidiFileBuffer(midiPath))
   }
 }

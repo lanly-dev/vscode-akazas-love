@@ -3,6 +3,7 @@ const vscode = require('vscode')
 const MusicSynth = require('./MusicSynth')
 const MusicTyping = require('./MusicTyping')
 const Speaker = require('./Speaker')
+const Snowfall = require('./Snowfall')
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -17,7 +18,9 @@ async function activate(context) {
   Speaker.startPersistentProcess()
 
   new MusicTyping(context, midiPath)
-  context.subscriptions.push(d1)
+  const snowfall = new Snowfall(context)
+  const d2 = rc('akazas-love.toggleSnowfall', () => snowfall.toggle())
+  context.subscriptions.push(d1, d2, { dispose: () => snowfall.dispose() })
 }
 
 // This method is called when your extension is deactivated

@@ -1,0 +1,237 @@
+const vscode = require('vscode')
+
+class Snowfall {
+  constructor(context) {
+    this.context = context
+    this.enabled = false
+    this.density = 80 // flakes per editor
+    this.speed = 10 // lines per second
+    this.size = 12 // px
+    this.color = '#ffffffcc'
+
+    this.timer = null
+    this.editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
+
+    this.disposables = []
+    this.disposables.push(
+      vscode.window.onDidChangeActiveTextEditor(() => this.#resetEditors()),
+      vscode.window.onDidChangeTextEditorVisibleRanges(() => this.#refreshFlakesLayout()),
+      vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('akazas-love.snowfall')) this.#loadConfig()
+      })
+    )
+
+    // Load config and start if enabled
+    this.#loadConfig()
+    if (this.enabled) this.start()
+  }
+
+  #loadConfig() {
+    const cfg = vscode.workspace.getConfiguration('akazas-love')
+    const prevEnabled = this.enabled
+    this.enabled = cfg.get('snowfall.enabled', false)
+    this.density = Math.max(0, Math.min(500, cfg.get('snowfall.density', this.density)))
+    this.speed = Math.max(0.1, Math.min(60, cfg.get('snowfall.speed', this.speed)))
+    this.size = Math.max(6, Math.min(48, cfg.get('snowfall.size', this.size)))
+    this.color = cfg.get('snowfall.color', this.color)
+    if (prevEnabled !== this.enabled)
+      if (this.enabled) this.start(); else this.stop()
+  }
+
+  start() {
+    if (this.timer) return
+    this.enabled = true
+    this.#resetEditors()
+    const fps = 30
+    const dt = 1 / fps
+    this.timer = setInterval(() => this.#tick(dt), Math.floor(1000 / fps))
+  }
+
+  stop() {
+    this.enabled = false
+    if (this.timer) { clearInterval(this.timer); this.timer = null }
+    for (const { decType } of this.editors.values()) {
+      const editor = this.#findEditorByDecType(decType)
+      if (editor) editor.setDecorations(decType, [])
+      decType.dispose()
+    }
+    this.editors.clear()
+  }
+
+  toggle() {
+    if (this.enabled) this.stop()
+    else this.start()
+    vscode.window.setStatusBarMessage(this.enabled ? '❄ Snowfall on empty lines' : '❄ Snowfall stopped', 1500)
+  }
+
+  dispose() {
+    this.stop()
+    this.disposables.forEach(d => { try { d.dispose() } catch {} })
+    this.disposables = []
+  }
+
+  #resetEditors() {
+    for (const { decType } of this.editors.values()) decType.dispose()
+    this.editors.clear()
+    vscode.window.visibleTextEditors.forEach(editor => {
+      const decType = vscode.window.createTextEditorDecorationType({
+        rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen,
+        before: {
+          contentText: '❄',
+          color: this.color,
+          fontWeight: 'normal'
+        }
+      })
+      const key = this.#editorKey(editor)
+      const model = { decType, flakes: [], maxColumns: 80 }
+      this.editors.set(key, model)
+      this.#spawnFlakesForEditor(editor, model)
+    })
+  }
+
+  #refreshFlakesLayout() {
+    vscode.window.visibleTextEditors.forEach(editor => {
+      const key = this.#editorKey(editor)
+      const model = this.editors.get(key)
+      if (!model) return
+      const vis = editor.visibleRanges[0]
+      const top = vis?.start?.line ?? 0
+      const bottom = vis?.end?.line ?? Math.min(editor.document.lineCount - 1, top)
+      const linesVisible = Math.max(1, bottom - top)
+      this.#ensureFlakeCount(editor, model, linesVisible)
+    })
+  }
+
+  #spawnFlakesForEditor(editor, model) {
+    const vis = editor.visibleRanges[0]
+    const top = vis?.start?.line ?? 0
+    const bottom = vis?.end?.line ?? Math.min(editor.document.lineCount - 1, top)
+    const linesVisible = Math.max(1, bottom - top)
+    model.flakes = []
+    this.#ensureFlakeCount(editor, model, linesVisible)
+  }
+
+  #tick(dt) {
+    if (!this.enabled) return
+    vscode.window.visibleTextEditors.forEach(editor => {
+      const key = this.#editorKey(editor)
+      const model = this.editors.get(key)
+      if (!model) return
+      const vis = editor.visibleRanges[0]
+      if (!vis) return
+      const top = vis.start.line
+      const bottom = vis.end.line
+      const linesVisible = Math.max(1, bottom - top) // This line is now removed from the method signature
+
+      // Estimate max columns by sampling a few visible lines
+      let maxCols = 0
+      const sample = Math.min(8, linesVisible)
+      for (let i = 0; i < sample; i++) {
+        const line = Math.min(editor.document.lineCount - 1, top + Math.floor((i * linesVisible) / Math.max(1, sample)))
+        maxCols = Math.max(maxCols, editor.document.lineAt(line).text.length)
+      }
+  // Allow a wide horizontal span: at least 120ch, or a bit beyond the longest visible line
+  model.maxColumns = Math.max(120, maxCols + 40)
+
+      // Move flakes
+      const baseSpeed = this.speed
+      for (const flake of model.flakes) {
+        const dy = baseSpeed * (flake.v ?? 1) * dt
+        flake.y += dy
+        if (flake.y > bottom + 2) {
+          flake.y = top - Math.random() * 3
+          flake.x = Math.random() * model.maxColumns
+          flake.size = this.size * (0.75 + Math.random() * 0.75)
+          flake.opacity = 0.6 + Math.random() * 0.4
+          flake.v = this.#randSpeedFactor()
+        }
+      }
+
+      // Render at same column; if current line has text at that column, fall through vertically
+      // to the first line below where that column is whitespace (or beyond EOL).
+      const opts = []
+      for (const flake of model.flakes) {
+        const startLine = Math.max(0, Math.min(editor.document.lineCount - 1, Math.floor(flake.y)))
+        // Clamp column against sampled max columns for stability; allow beyond EOL to count as whitespace
+        const col = Math.max(0, Math.round(flake.x))
+        let renderLine = -1
+        for (let l = startLine; l <= bottom; l++) {
+          const text = editor.document.lineAt(l).text
+          if (this.#isWhitespaceAt(text, col)) { renderLine = l; break }
+        }
+        if (renderLine === -1) continue // nothing to render in view yet; flake continues falling
+        const range = new vscode.Range(renderLine, 0, renderLine, 0)
+        opts.push({
+          range,
+          renderOptions: {
+            before: {
+              contentText: '❄',
+              color: this.#rgba(this.color, flake.opacity),
+              fontSize: `${flake.size}px`,
+              // Use absolute positioning so we don't push or shift code layout
+              textDecoration: `none; position: absolute; left: ${flake.x.toFixed(1)}ch; pointer-events: none;`
+            }
+          }
+        })
+      }
+      editor.setDecorations(model.decType, opts)
+      this.#ensureFlakeCount(editor, model) // Updated call to remove linesVisible
+    })
+  }
+
+  #isWhitespaceAt(text, idx) {
+    if (idx >= text.length) return true // beyond EOL counts as empty space
+    const ch = text[idx]
+    return /\s/.test(ch)
+  }
+
+  #ensureFlakeCount(editor, model) {
+    const target = this.density
+    const cur = model.flakes.length
+    if (cur < target) {
+      const vis = editor.visibleRanges[0]
+      const top = vis?.start?.line ?? 0
+      const bottom = vis?.end?.line ?? Math.min(editor.document.lineCount - 1, top)
+      for (let i = cur; i < target; i++) {
+        model.flakes.push({
+          x: Math.random() * model.maxColumns,
+          y: top + Math.random() * Math.max(1, bottom - top),
+          size: this.size * (0.75 + Math.random() * 0.75),
+          opacity: 0.6 + Math.random() * 0.4,
+          v: this.#randSpeedFactor()
+        })
+      }
+    } else if (cur > target) model.flakes.splice(target)
+  }
+
+  #editorKey(editor) { return editor?.document?.uri?.toString() || 'unknown' }
+
+  #findEditorByDecType(decType) {
+    for (const editor of vscode.window.visibleTextEditors) {
+      const key = this.#editorKey(editor)
+      const m = this.editors.get(key)
+      if (m && m.decType === decType) return editor
+    }
+    return null
+  }
+
+  #rgba(hexOrRgba, opacity) {
+    if (typeof hexOrRgba === 'string' && hexOrRgba.startsWith('#')) {
+      const hex = hexOrRgba.replace('#', '')
+      const a = parseInt(hex.length === 8 ? hex.slice(6, 8) : 'ff', 16) / 255
+      const r = parseInt(hex.slice(0, 2), 16)
+      const g = parseInt(hex.slice(2, 4), 16)
+      const b = parseInt(hex.slice(4, 6), 16)
+      const outA = Math.max(0, Math.min(1, a * opacity))
+      return `rgba(${r}, ${g}, ${b}, ${outA})`
+    }
+    return hexOrRgba
+  }
+
+  #randSpeedFactor() {
+    // Vary between ~0.6x and ~1.5x base speed for a natural look
+    return 0.6 + Math.random() * 0.9
+  }
+}
+
+module.exports = Snowfall

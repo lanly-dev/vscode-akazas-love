@@ -123,7 +123,8 @@ class MusicalTyping {
     const floatBuf = noteResult.floatBuffer
     const pcmBuffer = Buffer.from(new Uint8Array(floatBuf.buffer, floatBuf.byteOffset, floatBuf.byteLength))
     // Speaker.sendToSpeaker(pcmBuffer)
-    Speaker.sendToStreamSpeaker(pcmBuffer)
+    // Speaker.sendToStreamSpeaker(pcmBuffer)
+    Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
 
     // Visual feedback
     const noteName = MusicalTyping.#frequencyToNoteName(frequency)

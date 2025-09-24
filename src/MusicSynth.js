@@ -14,7 +14,7 @@ class MusicSynth {
     const freqDetuned = frequency * detuneRatio
 
     // --- Browser Tone.js minimum duration enforcement ---
-    const playDuration = Math.max(duration, 0.7)  // Match browser behavior!
+    const playDuration = Math.max(duration, 1)  // Match browser behavior!
 
     // --- Velocity mapping (browser uses 0.2 base volume) ---
     let velocity = options.velocity !== undefined ? options.velocity : 0.8

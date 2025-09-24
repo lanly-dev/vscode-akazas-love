@@ -66,7 +66,7 @@ class Snowfall {
 
   dispose() {
     this.stop()
-    this.disposables.forEach(d => { try { d.dispose() } catch {} })
+    this.disposables.forEach(d => { try { d.dispose() } catch { } })
     this.disposables = []
   }
 
@@ -130,18 +130,44 @@ class Snowfall {
         const line = Math.min(editor.document.lineCount - 1, top + Math.floor((i * linesVisible) / Math.max(1, sample)))
         maxCols = Math.max(maxCols, editor.document.lineAt(line).text.length)
       }
-  // Allow a wide horizontal span: at least 120ch, or a bit beyond the longest visible line
-  model.maxColumns = Math.max(120, maxCols + 40)
+      // Allow a wide horizontal span: at least 120ch, or a bit beyond the longest visible line
+      model.maxColumns = Math.max(120, maxCols + 40)
 
-      // Move flakes
+      // Move flakes: update position, animate size, and recycle if out of view
       const baseSpeed = this.speed
       for (const flake of model.flakes) {
+        // Move flake down by its speed factor
         const dy = baseSpeed * (flake.v ?? 1) * dt
         flake.y += dy
+
+        // Animate flake size with a gentle oscillation
+        if (flake.sizePhase === undefined || flake.sizePhase === null)
+          flake.sizePhase = Math.random() * Math.PI * 2
+        if (flake.sizeSpeed === undefined || flake.sizeSpeed === null)
+          flake.sizeSpeed = 0.5 + Math.random() * 1.5
+        if (flake.sizeAmp === undefined || flake.sizeAmp === null)
+          flake.sizeAmp = 0.25 + Math.random() * 0.35
+        if (flake.baseSize === undefined || flake.baseSize === null)
+          flake.baseSize = flake.size || (this.size * (0.75 + Math.random() * 0.75))
+
+        // Advance oscillation phase and compute new size
+        flake.sizePhase += flake.sizeSpeed * dt
+        const factor = 1 + flake.sizeAmp * Math.sin(flake.sizePhase)
+        const minS = flake.baseSize * 0.6
+        const maxS = flake.baseSize * 1.6
+        const s = flake.baseSize * factor
+        flake.size = Math.max(minS, Math.min(maxS, s))
+
+        // If flake is below the visible area, recycle it to the top
         if (flake.y > bottom + 2) {
           flake.y = top - Math.random() * 3
           flake.x = Math.random() * model.maxColumns
-          flake.size = this.size * (0.75 + Math.random() * 0.75)
+          // Reset base visuals for recycled flake
+          flake.baseSize = this.size * (0.75 + Math.random() * 0.75)
+          flake.sizePhase = Math.random() * Math.PI * 2
+          flake.sizeSpeed = 0.5 + Math.random() * 1.5
+          flake.sizeAmp = 0.25 + Math.random() * 0.35
+          flake.size = flake.baseSize
           flake.opacity = 0.6 + Math.random() * 0.4
           flake.v = this.#randSpeedFactor()
         }
@@ -152,7 +178,7 @@ class Snowfall {
       const opts = []
       for (const flake of model.flakes) {
         const startLine = Math.max(0, Math.min(editor.document.lineCount - 1, Math.floor(flake.y)))
-        // Clamp column against sampled max columns for stability; allow beyond EOL to count as whitespace
+        // Use integer column positioning to avoid sub-ch jitter
         const col = Math.max(0, Math.round(flake.x))
         let renderLine = -1
         for (let l = startLine; l <= bottom; l++) {
@@ -161,15 +187,16 @@ class Snowfall {
         }
         if (renderLine === -1) continue // nothing to render in view yet; flake continues falling
         const range = new vscode.Range(renderLine, 0, renderLine, 0)
+        const scale = Math.max(0.3, flake.size / this.size)
         opts.push({
           range,
           renderOptions: {
             before: {
               contentText: '❄',
               color: this.#rgba(this.color, flake.opacity),
-              fontSize: `${flake.size}px`,
-              // Use absolute positioning so we don't push or shift code layout
-              textDecoration: `none; position: absolute; left: ${flake.x.toFixed(1)}ch; pointer-events: none;`
+              // Position via transform so glyph scaling doesn't affect horizontal placement
+              // Use editor font's ch width (inherit) and scale glyph separately
+              textDecoration: `none; position: absolute; left: 0; transform: translateX(${col}ch) scale(${scale.toFixed(3)}); transform-origin: top left; pointer-events: none;`
             }
           }
         })
@@ -196,6 +223,10 @@ class Snowfall {
         model.flakes.push({
           x: Math.random() * model.maxColumns,
           y: top + Math.random() * Math.max(1, bottom - top),
+          baseSize: this.size * (0.75 + Math.random() * 0.75),
+          sizePhase: Math.random() * Math.PI * 2,
+          sizeSpeed: 0.5 + Math.random() * 1.5,
+          sizeAmp: 0.25 + Math.random() * 0.35,
           size: this.size * (0.75 + Math.random() * 0.75),
           opacity: 0.6 + Math.random() * 0.4,
           v: this.#randSpeedFactor()

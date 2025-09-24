@@ -66,9 +66,9 @@
         },
         "akazas-love.snowfall.speed": {
           "type": "number",
-          "default": 10,
+          "default": 5,
           "minimum": 0.1,
-          "maximum": 60,
+          "maximum": 10,
           "description": "Snowfall speed in lines per second"
         },
         "akazas-love.snowfall.size": {

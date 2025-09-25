@@ -14,6 +14,25 @@
   ],
   "main": "./src/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "akazas-love-images",
+          "title": "Akaza Images",
+          "icon": "media/image-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "akazas-love-images": [
+        {
+          "type": "webview",
+          "id": "akazas-love.happyImageView",
+          "name": "Happy Image",
+          "icon": "media/image-icon.svg"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "akazas-love.playSong",

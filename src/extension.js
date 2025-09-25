@@ -4,6 +4,7 @@ const MusicSynth = require('./MusicSynth')
 const MusicTyping = require('./MusicTyping')
 const Speaker = require('./Speaker')
 const Snowfall = require('./Snowfall')
+const HappyImageViewProvider = require('./WebviewProvider')
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -20,7 +21,9 @@ async function activate(context) {
   new MusicTyping(context, midiPath)
   const snowfall = new Snowfall(context)
   const d2 = rc('akazas-love.toggleSnowfall', () => snowfall.toggle())
-  context.subscriptions.push(d1, d2, { dispose: () => snowfall.dispose() })
+  const happyProvider = new HappyImageViewProvider(context)
+  const viewDisp = vscode.window.registerWebviewViewProvider('akazas-love.happyImageView', happyProvider)
+  context.subscriptions.push(d1, d2, viewDisp, { dispose: () => snowfall.dispose() })
 }
 
 // This method is called when your extension is deactivated

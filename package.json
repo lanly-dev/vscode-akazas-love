@@ -65,12 +65,6 @@
           "maximum": 1,
           "description": "Volume level for musical notes (0.0 to 1.0)"
         },
-        "akazas-love.output": {
-          "type": "string",
-          "enum": ["native", "portaudio"],
-          "default": "portaudio",
-          "description": "Choose audio output backend: 'native' uses the Node speaker module; 'portaudio' uses the external play-buffer binary"
-        },
         "akazas-love.snowfall.enabled": {
           "type": "boolean",
           "default": false,
@@ -110,7 +104,6 @@
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
-    "speaker": "^0.5.5",
     "follow-redirects": "^1.15.9"
   },
   "devDependencies": {

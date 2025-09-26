@@ -3,7 +3,6 @@ const { Midi } = require('@tonejs/midi')
 const fs = require('fs')
 const path = require('path')
 const Speaker = require('./Speaker')
-const NativeSpeaker = require('./NativeSpeaker')
 const MusicSynth = require('./MusicSynth')
 
 class MusicalTyping {
@@ -16,8 +15,7 @@ class MusicalTyping {
 
     // Configuration
     this.enabled = true
-  this.volume = 0.1
-  this.output = 'native' // 'native' | 'portaudio'
+    this.volume = 0.1
 
     this.#notes = []
     this.#currentNoteIdx = 0
@@ -31,7 +29,6 @@ class MusicalTyping {
     const config = vscode.workspace.getConfiguration('akazas-love')
     this.enabled = config.get('enabled', true)
     this.volume = config.get('volume', 0.1)
-    this.output = config.get('output', 'native')
   }
 
   async #loadMidiFile() {
@@ -118,19 +115,11 @@ class MusicalTyping {
     this.#currentNoteIdx++
   }
 
-  // Play individual note using MusicSynth
   async playIndividualNote(frequency, duration, options) {
-    if (this.output === 'native') {
-      // Generate the note audio buffer using MusicSynth (PCM16 for NativeSpeaker)
-      const noteResult = MusicSynth.generateNotePCM16(frequency, duration, 0, options)
-      const pcmBuffer = Buffer.from(noteResult.int16Buffer.buffer)
-      NativeSpeaker.sendMultipleStreamsSpeaker(pcmBuffer)
-    } else {
-      // PortAudio path: stream via play-buffer binary (expects Int16)
-      const noteResult = MusicSynth.generateNotePCM16(frequency, duration, 0, options)
-      const pcmBuffer = Buffer.from(noteResult.int16Buffer.buffer)
-      Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
-    }
+    // PortAudio path: stream via play-buffer binary (expects Int16)
+    const noteResult = MusicSynth.generateNotePCM16(frequency, duration, 0, options)
+    const pcmBuffer = Buffer.from(noteResult.int16Buffer.buffer)
+    Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
 
     // Visual feedback
     const noteName = MusicalTyping.#frequencyToNoteName(frequency)

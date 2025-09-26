@@ -45,11 +45,6 @@ class MusicSynth {
     return result
   }
 
-  // Generate a note into a Float32Array [-1..1]
-  static generateNotePCMFloat32(frequency, duration, startTime, options = {}) {
-    return this.generateNote(frequency, duration, startTime, options)
-  }
-
   // Generate a note into an Int16Array [-32768..32767]
   static generateNotePCM16(frequency, duration, startTime, options = {}) {
     const note = this.generateNote(frequency, duration, startTime, options)

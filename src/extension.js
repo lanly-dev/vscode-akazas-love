@@ -15,7 +15,6 @@ async function activate(context) {
   const rc = vscode.commands.registerCommand
   const d1 = rc('akazas-love.playSong', () => MusicSynth.playMidiFile(midiPath))
   if (!Speaker.binaryReady) await Speaker.downloadPlayBuffer(context)
-  // Start persistent speaker process (Windows)
   Speaker.startPersistentProcess()
 
   new MusicTyping(context, midiPath)

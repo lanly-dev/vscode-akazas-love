@@ -95,6 +95,18 @@
           "type": "string",
           "default": "#ffffffcc",
           "description": "Snowflake color (hex or rgba)"
+        },
+        "akazas-love.snowfall.typingDriven": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
+        },
+        "akazas-love.snowfall.speedSensitivity": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0.1,
+          "maximum": 10,
+          "description": "How much typing rate affects snowflake speed (higher = faster, applies to both editor and webview in typing-driven mode)"
         }
       }
     }

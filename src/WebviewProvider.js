@@ -14,10 +14,22 @@ class HappyImageViewProvider {
     }
     const imgPath = webviewView.webview.asWebviewUri(vscode.Uri.file(path.join(this.context.extensionPath, 'media', 'happy.png')))
     webviewView.webview.html = this.#html(imgPath)
+
+    // Listen for config changes and typing events from extension
+    this._webview = webviewView.webview
+  }
+
+  /**
+   * Send a message to the webview (from extension)
+   * @param {object} msg
+   */
+  postMessage(msg) {
+    if (this._webview)
+      this._webview.postMessage(msg)
   }
 
   #html(src) {
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -48,25 +60,31 @@ class HappyImageViewProvider {
     window.addEventListener('resize', resize);
     resize();
     // Snowflake state
+    let typingDriven = false;
+    let speedSensitivity = 3;
+    let typingRate = 0;
+    let density = 80;
     const flakes = [];
-  const DENSITY = 80;
-    function spawnFlake() {
+    function spawnFlake(override) {
+      // override: {speed, y}
+      const v = override && override.speed !== undefined ? override.speed : (0.7 + Math.random() * 1.2);
+      const y = override && override.y !== undefined ? override.y : (-10 - Math.random() * 40);
       return {
         x: Math.random() * W,
-        y: -10 - Math.random() * 40,
+        y: y,
         r: 6 + Math.random() * 8,
-        v: 0.7 + Math.random() * 1.2,
+        v: v,
         a: 0.5 + Math.random() * 0.5,
         phase: Math.random() * Math.PI * 2,
         drift: 0.3 + Math.random() * 0.7
       };
     }
     function ensureFlakes() {
-      while (flakes.length < DENSITY) flakes.push(spawnFlake());
-      if (flakes.length > DENSITY) flakes.splice(DENSITY);
+      while (flakes.length < density) flakes.push(spawnFlake());
+      if (flakes.length > density) flakes.splice(density);
     }
     function tick() {
-      ensureFlakes();
+      if (!typingDriven) ensureFlakes();
       ctx.clearRect(0,0,W,H);
       ctx.globalCompositeOperation = 'lighter';
       for (const f of flakes) {
@@ -84,6 +102,26 @@ class HappyImageViewProvider {
       requestAnimationFrame(tick);
     }
     tick();
+
+    // Listen for extension messages
+    window.addEventListener('message', event => {
+      const msg = event.data;
+      if (msg && msg.type === 'config') {
+        typingDriven = !!msg.typingDriven;
+        speedSensitivity = msg.speedSensitivity || 3;
+        density = msg.density || 80;
+        if (!typingDriven) {
+          // Reset flakes for normal snow
+          flakes.length = 0;
+        }
+      } else if (msg && msg.type === 'key' && typingDriven) {
+        typingRate = msg.typingRate || 0;
+        // Spawn a flake per keypress, speed based on typing rate
+        const speed = 0.7 + typingRate * speedSensitivity;
+        flakes.push(spawnFlake({ speed, y: -10 }));
+        if (flakes.length > density) flakes.splice(0, flakes.length - density);
+      }
+    });
   </script>
 </body>
 </html>`

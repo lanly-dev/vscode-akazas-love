@@ -1,6 +1,11 @@
+
 const vscode = require('vscode')
+const TypingDrivenSnow = require('./TypingDrivenSnow')
 
 class Snowfall {
+  #typingDriven = false
+  #speedSensitivity = 3
+  #typingDrivenSnow = null
   constructor(context) {
     this.context = context
     this.enabled = false
@@ -21,6 +26,7 @@ class Snowfall {
       })
     )
 
+    this.#typingDrivenSnow = new TypingDrivenSnow(this)
     // Load config and start if enabled
     this.#loadConfig()
     if (this.enabled) this.start()
@@ -29,27 +35,47 @@ class Snowfall {
   #loadConfig() {
     const cfg = vscode.workspace.getConfiguration('akazas-love')
     const prevEnabled = this.enabled
+    const prevTypingDriven = this.#typingDriven
     this.enabled = cfg.get('snowfall.enabled', false)
     this.density = Math.max(0, Math.min(500, cfg.get('snowfall.density', this.density)))
     this.speed = Math.max(0.1, Math.min(60, cfg.get('snowfall.speed', this.speed)))
     this.size = Math.max(6, Math.min(48, cfg.get('snowfall.size', this.size)))
     this.color = cfg.get('snowfall.color', this.color)
-    if (prevEnabled !== this.enabled)
+    this.#typingDriven = cfg.get('snowfall.typingDriven', false)
+    this.#speedSensitivity = Math.max(0.1, Math.min(10, cfg.get('snowfall.speedSensitivity', 3)))
+    this.#typingDrivenSnow.loadConfig(cfg)
+    if (prevEnabled !== this.enabled || prevTypingDriven !== this.#typingDriven)
       if (this.enabled) this.start(); else this.stop()
   }
 
   start() {
-    if (this.timer) return
+    if (this.timer || !this.enabled) return
     this.enabled = true
     this.#resetEditors()
+    if (this.#typingDriven)
+      this.#typingDrivenSnow.start()
+    else
+      this.#startNormalSnow()
+  }
+
+  #startNormalSnow() {
+    if (this.timer) return
     const fps = 30
     const dt = 1 / fps
     this.timer = setInterval(() => this.#tick(dt), Math.floor(1000 / fps))
+    this.#typingDrivenSnow.stop()
   }
+
+
+
+  // Expose for TypingDrivenSnow
+  editorKey(editor) { return this.#editorKey(editor) }
+  renderEditor(editor, model) { return this.#renderEditor(editor, model) }
 
   stop() {
     this.enabled = false
     if (this.timer) { clearInterval(this.timer); this.timer = null }
+    this.#typingDrivenSnow.stop()
     for (const { decType } of this.editors.values()) {
       const editor = this.#findEditorByDecType(decType)
       if (editor) editor.setDecorations(decType, [])
@@ -61,7 +87,43 @@ class Snowfall {
   toggle() {
     if (this.enabled) this.stop()
     else this.start()
-    vscode.window.setStatusBarMessage(this.enabled ? '❄ Snowfall on empty lines' : '❄ Snowfall stopped', 1500)
+    let msg = '❄ Snowfall '
+    if (this.enabled)
+      msg += this.#typingDriven ? 'per keypress (typing-driven)' : 'on empty lines'
+    else
+      msg += 'stopped'
+    vscode.window.setStatusBarMessage(msg, 1500)
+  }
+  #renderEditor(editor, model) {
+    // Render all flakes in model.flakes
+    const vis = editor.visibleRanges[0]
+    if (!vis) return
+  // const top = vis.start.line // unused
+  const bottom = vis.end.line
+    const opts = []
+    for (const flake of model.flakes) {
+      const startLine = Math.max(0, Math.min(editor.document.lineCount - 1, Math.floor(flake.y)))
+      const col = Math.max(0, Math.round(flake.x))
+      let renderLine = -1
+      for (let l = startLine; l <= bottom; l++) {
+        const text = editor.document.lineAt(l).text
+        if (this.#isWhitespaceAt(text, col)) { renderLine = l; break }
+      }
+      if (renderLine === -1) continue
+      const range = new vscode.Range(renderLine, 0, renderLine, 0)
+      const scale = Math.max(0.3, flake.size / this.size)
+      opts.push({
+        range,
+        renderOptions: {
+          before: {
+            contentText: '❄',
+            color: this.#rgba(this.color, flake.opacity),
+            textDecoration: `none; position: absolute; left: 0; transform: translateX(${col}ch) scale(${scale.toFixed(3)}); transform-origin: top left; pointer-events: none;`
+          }
+        }
+      })
+    }
+    editor.setDecorations(model.decType, opts)
   }
 
   dispose() {
@@ -158,18 +220,21 @@ class Snowfall {
         const s = flake.baseSize * factor
         flake.size = Math.max(minS, Math.min(maxS, s))
 
-        // If flake is below the visible area, recycle it to the top
-        if (flake.y > bottom + 2) {
-          flake.y = top - Math.random() * 3
-          flake.x = Math.random() * model.maxColumns
-          // Reset base visuals for recycled flake
-          flake.baseSize = this.size * (0.75 + Math.random() * 0.75)
-          flake.sizePhase = Math.random() * Math.PI * 2
-          flake.sizeSpeed = 0.5 + Math.random() * 1.5
-          flake.sizeAmp = 0.25 + Math.random() * 0.35
-          flake.size = flake.baseSize
-          flake.opacity = 0.6 + Math.random() * 0.4
-          flake.v = this.#randSpeedFactor()
+        // If typing-driven, do NOT recycle flakes
+        if (!this.#typingDriven) {
+          // If flake is below the visible area, recycle it to the top
+          if (flake.y > bottom + 2) {
+            flake.y = top - Math.random() * 3
+            flake.x = Math.random() * model.maxColumns
+            // Reset base visuals for recycled flake
+            flake.baseSize = this.size * (0.75 + Math.random() * 0.75)
+            flake.sizePhase = Math.random() * Math.PI * 2
+            flake.sizeSpeed = 0.5 + Math.random() * 1.5
+            flake.sizeAmp = 0.25 + Math.random() * 0.35
+            flake.size = flake.baseSize
+            flake.opacity = 0.6 + Math.random() * 0.4
+            flake.v = this.#randSpeedFactor()
+          }
         }
       }
 

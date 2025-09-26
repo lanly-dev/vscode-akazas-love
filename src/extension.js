@@ -21,8 +21,8 @@ async function activate(context) {
   const snowfall = new Snowfall(context)
   const d2 = rc('akazas-love.toggleSnowfall', () => snowfall.toggle())
   const happyProvider = new HappyImageViewProvider(context)
-  const viewDisp = vscode.window.registerWebviewViewProvider('akazas-love.happyImageView', happyProvider)
-  context.subscriptions.push(d1, d2, viewDisp, { dispose: () => snowfall.dispose() })
+  const d3 = vscode.window.registerWebviewViewProvider('akazas-love.happyImageView', happyProvider)
+  context.subscriptions.push(d1, d2, d3, { dispose: () => snowfall.dispose() })
 }
 
 // This method is called when your extension is deactivated

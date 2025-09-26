@@ -116,9 +116,8 @@ class MusicalTyping {
   }
 
   async playIndividualNote(frequency, duration, options) {
-    // PortAudio path: stream via play-buffer binary (expects Int16)
-    const noteResult = MusicSynth.generateNotePCM16(frequency, duration, 0, options)
-    const pcmBuffer = Buffer.from(noteResult.int16Buffer.buffer)
+    const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
+    const pcmBuffer = Buffer.from(noteResult.floatBuffer.buffer)
     Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
 
     // Visual feedback

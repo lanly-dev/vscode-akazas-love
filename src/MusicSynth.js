@@ -45,32 +45,9 @@ class MusicSynth {
     return result
   }
 
-  // Generate a note into an Int16Array [-32768..32767]
-  static generateNotePCM16(frequency, duration, startTime, options = {}) {
-    const note = this.generateNote(frequency, duration, startTime, options)
-    const f = note.floatBuffer
-    const len = f.length
-    const int16 = new Int16Array(len)
-    // Apply gentle headroom and TPDF dithering during conversion
-    const headroom = 0.97 // small headroom to avoid hard clipping
-    for (let i = 0; i < len; i++) {
-      // TPDF dither: sum of two uniform noises in [-0.5,0.5] scaled to LSB
-      const dither = (Math.random() - 0.5 + Math.random() - 0.5) * (1 / 32767)
-      let v = f[i] * headroom + dither
-      if (v > 1) v = 1
-      else if (v < -1) v = -1
-      int16[i] = v * 32767
-    }
-    return { ...note, int16Buffer: int16 }
-  }
-
   static async getMidiFileBuffer(midiFilePath, options = {}) {
     const midiData = fs.readFileSync(midiFilePath)
     const midi = new Midi(midiData)
-
-    console.log(`Parsing MIDI file: ${midiFilePath}`)
-    console.log(`Duration: ${midi.duration.toFixed(2)} seconds`)
-    console.log(`Tracks: ${midi.tracks.length}`)
 
     let allNotes = []
 
@@ -94,7 +71,7 @@ class MusicSynth {
       })
     })
 
-    console.log(`Found ${allNotes.length} notes`)
+    // console.log(`Found ${allNotes.length} notes`)
 
     // Sort by start time
     allNotes.sort((a, b) => a.startTime - b.startTime)
@@ -120,8 +97,8 @@ class MusicSynth {
       note.chordScale = 1 / chordSize  // Volume scaling for chords
     })
 
-    // Create final audio buffer as Int16Array and initialize to zeros
-    const finalMix = new Float32Array(totalSamples).fill(0)
+    // Create final audio buffer as Int16Array
+    const finalMix = new Float32Array(totalSamples)
 
     // Generate and mix all notes
     allNotes.forEach((note, index) => {
@@ -145,8 +122,6 @@ class MusicSynth {
       }
     })
 
-    // diagnostics removed
-
     // Apply a gentle soft clip and headroom before converting to Int16 to reduce harsh clipping
     const headroom = 0.97
     for (let i = 0; i < totalSamples; i++) {
@@ -163,9 +138,7 @@ class MusicSynth {
       else if (v < -1) v = -1
       finalBuffer[i] = v * 32767
     }
-    // Convert Int16Array to Buffer for NativeSpeaker
-    const outBuf = Buffer.from(finalBuffer.buffer)
-    return outBuf
+    return finalBuffer.buffer
   }
 
 }

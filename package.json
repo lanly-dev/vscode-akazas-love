@@ -48,21 +48,24 @@
     "configuration": {
       "title": "Akaza's Love",
       "properties": {
-        "akazas-love.enabled": {
+        "akazas-love.MusicTyping": {
           "type": "boolean",
           "default": true,
           "description": "Enable musical typing sounds"
         },
-        "akazas-love.snowfall": {
+        "akazas-love.snowInEditor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable snowfall overlay in editors"
+        },
+        "akazas-love.snowConfigs": {
           "type": "object",
           "default": {
             "color": "#ffffffcc",
             "density": 100,
-            "enabled": true,
             "size": 10,
             "speed": 5,
-            "speedSensitivity": 3,
-            "typingDriven": false
+            "speedSensitivity": 3
           },
           "properties": {
             "color": {
@@ -76,11 +79,6 @@
               "minimum": 0,
               "maximum": 500,
               "description": "Number of snowflakes per visible editor"
-            },
-            "enabled": {
-              "type": "boolean",
-              "default": true,
-              "description": "Enable snowfall overlay in editors"
             },
             "size": {
               "type": "number",
@@ -102,14 +100,14 @@
               "minimum": 1,
               "maximum": 10,
               "description": "How much typing rate affects snowflake speed (higher = faster, applies to both editor and webview in typing-driven mode)"
-            },
-            "typingDriven": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
             }
           },
           "description": "Snowfall overlay configuration (all snow-related properties)"
+        },
+        "akazas-love.typingDriven": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
         },
         "akazas-love.volume": {
           "type": "number",

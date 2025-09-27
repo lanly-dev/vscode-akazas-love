@@ -7,7 +7,7 @@ const { spawn } = require('child_process')
 class Speaker {
 
   static #PLAY_BUFFER_MODE = '--stream-callback'
-  static #CHUNK_SIZE = 2048 // bytes
+  static #CHUNK_SIZE = 512 // bytes
 
   static #binaryPath = null
   static #binaryReady = false
@@ -17,6 +17,7 @@ class Speaker {
   // Round-robin pool of up to 10 persistent play-buffer processes
   static #streamPool = []
   static #streamPoolIdx = 0
+  static #MAX_STREAMS = 100
 
   static get #assetName() {
     const platform = process.platform
@@ -52,7 +53,7 @@ class Speaker {
     }
     try {
       if (!Speaker.#binaryReady) await Speaker.#downloadPlayBuffer(context)
-      Speaker.startPersistentProcess()
+      Speaker.startPersistentProcesses()
     } catch (e) {
       console.error('Failed to setup Speaker:', e)
     }
@@ -137,36 +138,8 @@ class Speaker {
   }
 
   static sendToMultipleStreamsSpeaker(buffer) {
-    // console.log('Speaker.sendToMultipleStreamsSpeaker buffer length:', buffer.length, Speaker.streamPoolIdx)
-    if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) {
-      vscode.window.showWarningMessage('play-buffer binary not found or not downloaded')
-      return
-    }
-    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
-      console.warn('Speaker.sendToMultipleStreams: Invalid buffer', buffer)
-      return
-    }
-    const maxStreams = 20
-    // Initialize pool if needed
-    if (Speaker.#streamPool.length < maxStreams) {
-      for (let i = Speaker.#streamPool.length; i < maxStreams; i++) {
-        try {
-          const proc = spawn(Speaker.#binaryPath, [Speaker.#PLAY_BUFFER_MODE], { stdio: ['pipe', 'ignore', 'ignore'] })
-          proc.on('error', (err) => {
-            console.error('play-buffer pool process error:', err)
-          })
-          proc.on('exit', () => {
-            // Remove dead process from pool
-            Speaker.#streamPool[i] = null
-          })
-          Speaker.#streamPool.push(proc)
-        } catch (e) {
-          console.error('Failed to start pool process:', e)
-        }
-      }
-    }
     // Send buffer to next process in pool (round robin)
-    let proc = Speaker.#streamPool[Speaker.streamPoolIdx % maxStreams]
+    let proc = Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS]
     if (!proc || proc.killed) {
       // Restart dead process
       try {
@@ -175,9 +148,9 @@ class Speaker {
           console.error('play-buffer pool process error:', err)
         })
         proc.on('exit', () => {
-          Speaker.#streamPool[Speaker.#streamPoolIdx % maxStreams] = null
+          Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS] = null
         })
-        Speaker.#streamPool[Speaker.#streamPoolIdx % maxStreams] = proc
+        Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS] = proc
       } catch (e) {
         console.error('Failed to restart pool process:', e)
         return
@@ -188,34 +161,44 @@ class Speaker {
     } catch (e) {
       console.error('Speaker.sendToMultipleStreamsSpeaker write error:', e)
     }
-    Speaker.#streamPoolIdx = (Speaker.#streamPoolIdx + 1) % maxStreams
+    Speaker.#streamPoolIdx = (Speaker.#streamPoolIdx + 1) % Speaker.#MAX_STREAMS
   }
 
-  static startPersistentProcess() {
-    if (Speaker.#persistentProcess && !Speaker.#persistentProcess.killed) return
-    if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) return
+  static startPersistentProcesses() {
     try {
-      Speaker.#persistentProcess = spawn(Speaker.#binaryPath, [Speaker.#PLAY_BUFFER_MODE], {
-        stdio: ['pipe', 'ignore', 'ignore']
-      })
-      Speaker.#persistentProcess.on('error', (err) => {
-        console.error('play-buffer process error:', err)
-        vscode.window.showWarningMessage('play-buffer process error: ' + err.message)
-        Speaker.#persistentProcess = null
-      })
-      Speaker.#persistentProcess.on('exit', () => {
-        Speaker.#persistentProcess = null
-      })
+      if (Speaker.#streamPool.length < Speaker.#MAX_STREAMS) {
+        for (let i = Speaker.#streamPool.length; i < Speaker.#MAX_STREAMS; i++) {
+          const proc = spawn(Speaker.#binaryPath, [Speaker.#PLAY_BUFFER_MODE], { stdio: ['pipe', 'ignore', 'ignore'] })
+          proc.on('error', (err) => {
+            console.error('play-buffer pool process error:', err)
+            Speaker.#streamPool[i] = null
+          })
+          proc.on('exit', () => {
+            console.info('play-buffer pool process exited')
+            Speaker.#streamPool[i] = null
+          })
+          Speaker.#streamPool.push(proc)
+        }
+      }
     } catch (err2) {
       console.error('Failed to start play-buffer process:', err2)
       vscode.window.showWarningMessage('Failed to start play-buffer process: ' + err2.message)
     }
   }
 
-  static stopPersistentProcess() {
-    if (Speaker.#persistentProcess && !Speaker.#persistentProcess.killed) {
-      try { Speaker.#persistentProcess.stdin.end() } catch { }
-      try { Speaker.#persistentProcess.kill() } catch { }
+  static stopPersistentProcesses() {
+    try {
+      // Kill all stream pool processes
+      for (let proc of Speaker.#streamPool) {
+        if (proc && !proc.killed) {
+          proc.stdin.end()
+          proc.kill()
+        }
+      }
+      Speaker.#streamPool = []
+      Speaker.#streamPoolIdx = 0
+    } catch (e) {
+      console.error('Failed to stop play-buffer processes:', e)
     }
     Speaker.#persistentProcess = null
   }
@@ -239,7 +222,7 @@ class Speaker {
     if (isBufferTooShort) console.warn('PCM buffer is very short (less than 0.1s)')
 
     try {
-      const playProcess = spawn(Speaker.#binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore']})
+      const playProcess = spawn(Speaker.#binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore'] })
       playProcess.stdin.write(buffer)
       playProcess.stdin.end()
       playProcess.on('error', (err) => {

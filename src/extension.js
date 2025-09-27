@@ -1,26 +1,33 @@
 const path = require('path')
 const vscode = require('vscode')
+
 const MusicSynth = require('./MusicSynth')
 const MusicTyping = require('./MusicTyping')
-const Speaker = require('./Speaker')
 const Snowfall = require('./Snowfall')
-const HappyImageViewProvider = require('./WebviewProvider')
+const Speaker = require('./Speaker')
+const WebviewProvider = require('./WebviewProvider')
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 async function activate(context) {
+  console.log('Congratulations, your extension "akazas-love" is now active!')
+  // Start Speaker setup in background (non-blocking)
+  Speaker.setupSpeaker(context).then(() => {
+    vscode.window.setStatusBarMessage('🔊 play-buffer ready', 2000)
+  }).catch(() => {
+    vscode.window.setStatusBarMessage('⚠️ play-buffer setup failed', 3000)
+  })
 
-  const midiPath = path.join(context.extensionPath, 'media', 'akaza\'s-love-theme.mid')
   const rc = vscode.commands.registerCommand
+  const midiPath = path.join(context.extensionPath, 'media', `akaza's-love-theme.mid`)
   const d1 = rc('akazas-love.playSong', () => MusicSynth.playMidiFile(midiPath))
-  if (!Speaker.binaryReady) await Speaker.downloadPlayBuffer(context)
-  Speaker.startPersistentProcess()
 
+  // Initialize MusicTyping immediately (no await)
   new MusicTyping(context, midiPath)
   const snowfall = new Snowfall(context)
   const d2 = rc('akazas-love.toggleSnowfall', () => snowfall.toggle())
-  const happyProvider = new HappyImageViewProvider(context)
+  const happyProvider = new WebviewProvider(context)
   const d3 = vscode.window.registerWebviewViewProvider('akazas-love.happyImageView', happyProvider)
   context.subscriptions.push(d1, d2, d3, { dispose: () => snowfall.dispose() })
 
@@ -68,7 +75,7 @@ async function activate(context) {
 
 // This method is called when your extension is deactivated
 function deactivate() {
-  try { Speaker.stopPersistentProcess() } catch {}
+  try { Speaker.stopPersistentProcess() } catch { }
 }
 
 module.exports = { activate, deactivate }

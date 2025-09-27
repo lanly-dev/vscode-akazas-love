@@ -40,11 +40,6 @@
         "category": "Akaza's Love"
       },
       {
-        "command": "akazas-love.reloadMidi",
-        "title": "Reload MIDI Theme",
-        "category": "Akaza's Love"
-      },
-      {
         "command": "akazas-love.toggleSnowfall",
         "title": "Toggle Snowfall",
         "category": "Akaza's Love"
@@ -58,70 +53,70 @@
           "default": true,
           "description": "Enable musical typing sounds"
         },
+        "akazas-love.snowfall": {
+          "type": "object",
+          "default": {
+            "color": "#ffffffcc",
+            "density": 100,
+            "enabled": true,
+            "size": 10,
+            "speed": 5,
+            "speedSensitivity": 3,
+            "typingDriven": false
+          },
+          "properties": {
+            "color": {
+              "type": "string",
+              "default": "#ffffffcc",
+              "description": "Snowflake color (hex or rgba)"
+            },
+            "density": {
+              "type": "number",
+              "default": 100,
+              "minimum": 0,
+              "maximum": 500,
+              "description": "Number of snowflakes per visible editor"
+            },
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable snowfall overlay in editors"
+            },
+            "size": {
+              "type": "number",
+              "default": 10,
+              "minimum": 5,
+              "maximum": 50,
+              "description": "Base snowflake size in pixels"
+            },
+            "speed": {
+              "type": "number",
+              "default": 5,
+              "minimum": 1,
+              "maximum": 10,
+              "description": "Snowfall speed in lines per second"
+            },
+            "speedSensitivity": {
+              "type": "number",
+              "default": 3,
+              "minimum": 1,
+              "maximum": 10,
+              "description": "How much typing rate affects snowflake speed (higher = faster, applies to both editor and webview in typing-driven mode)"
+            },
+            "typingDriven": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
+            }
+          },
+          "description": "Snowfall overlay configuration (all snow-related properties)"
+        },
         "akazas-love.volume": {
           "type": "number",
           "default": 0.1,
           "minimum": 0,
           "maximum": 1,
           "description": "Volume level for musical notes (0.0 to 1.0)"
-        },
-        "akazas-love.snowfall": {
-          "type": "object",
-          "default": {
-            "enabled": false,
-            "density": 80,
-            "speed": 5,
-            "size": 12,
-            "color": "#ffffffcc",
-            "typingDriven": false,
-            "speedSensitivity": 3
-          },
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable snowfall overlay in editors"
-            },
-            "density": {
-              "type": "number",
-              "default": 80,
-              "minimum": 0,
-              "maximum": 500,
-              "description": "Number of snowflakes per visible editor"
-            },
-            "speed": {
-              "type": "number",
-              "default": 5,
-              "minimum": 0.1,
-              "maximum": 10,
-              "description": "Snowfall speed in lines per second"
-            },
-            "size": {
-              "type": "number",
-              "default": 12,
-              "minimum": 6,
-              "maximum": 48,
-              "description": "Base snowflake size in pixels"
-            },
-            "color": {
-              "type": "string",
-              "default": "#ffffffcc",
-              "description": "Snowflake color (hex or rgba)"
-            },
-            "typingDriven": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
-            },
-            "speedSensitivity": {
-              "type": "number",
-              "default": 3,
-              "minimum": 0.1,
-              "maximum": 10,
-              "description": "How much typing rate affects snowflake speed (higher = faster, applies to both editor and webview in typing-driven mode)"
-            }
-          },
-          "description": "Snowfall overlay configuration (all snow-related properties)"
         }
       }
     }

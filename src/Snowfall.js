@@ -4,20 +4,17 @@ const snowTyping = require('./SnowTyping')
 
 class Snowfall {
 
-  #snowTyping = null
-  #speedSensitivity = 3
-  #typingDriven = false
+  #snowTyping
+  #speedSensitivity
+  #typingDriven
 
+  /** @param {vscode.ExtensionContext} context */
   constructor(context) {
     this.context = context
-    this.enabled = false
-    this.density = 80 // flakes per editor
-    this.speed = 10 // lines per second
-    this.size = 12 // px
-    this.color = '#ffffffcc'
-
     this.timer = null
     this.editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
+
+    this.#snowTyping = new snowTyping(this)
 
     this.disposables = []
     this.disposables.push(
@@ -28,7 +25,6 @@ class Snowfall {
       })
     )
 
-    this.#snowTyping = new snowTyping(this)
     // Load config and start if enabled
     this.#loadConfig()
     if (this.enabled) this.start()
@@ -38,26 +34,28 @@ class Snowfall {
     const cfg = vscode.workspace.getConfiguration('akazas-love')
     const prevEnabled = this.enabled
     const prevTypingDriven = this.#typingDriven
-    this.enabled = cfg.get('snowfall.enabled', false)
-    this.density = Math.max(0, Math.min(500, cfg.get('snowfall.density', this.density)))
-    this.speed = Math.max(0.1, Math.min(60, cfg.get('snowfall.speed', this.speed)))
-    this.size = Math.max(6, Math.min(48, cfg.get('snowfall.size', this.size)))
-    this.color = cfg.get('snowfall.color', this.color)
+
+    this.color = cfg.get('snowfall.color')
+    this.density = Math.max(0, Math.min(500, cfg.get('snowfall.density')))
+    this.enabled = cfg.get('snowfall.enabled')
+    this.size = Math.max(6, Math.min(50, cfg.get('snowfall.size')))
+    this.speed = Math.max(1, Math.min(60, cfg.get('snowfall.speed')))
+
     this.#typingDriven = cfg.get('snowfall.typingDriven', false)
-    this.#speedSensitivity = Math.max(0.1, Math.min(10, cfg.get('snowfall.speedSensitivity', 3)))
+    this.#speedSensitivity = Math.max(1, Math.min(10, cfg.get('snowfall.speedSensitivity')))
     this.#snowTyping.loadConfig(cfg)
-    if (prevEnabled !== this.enabled || prevTypingDriven !== this.#typingDriven)
-      if (this.enabled) this.start(); else this.stop()
+    if (prevEnabled !== this.enabled || prevTypingDriven !== this.#typingDriven) {
+      if (this.enabled) this.start()
+      else this.stop()
+    }
   }
 
   start() {
     if (this.timer || !this.enabled) return
     this.enabled = true
     this.#resetEditors()
-    if (this.#typingDriven)
-      this.#snowTyping.start()
-    else
-      this.#startNormalSnow()
+    if (this.#typingDriven) this.#snowTyping.start()
+    else this.#startNormalSnow()
   }
 
   #startNormalSnow() {
@@ -71,12 +69,20 @@ class Snowfall {
 
 
   // Expose for snowTyping
-  editorKey(editor) { return this.#editorKey(editor) }
-  renderEditor(editor, model) { return this.#renderEditor(editor, model) }
+  editorKey(editor) {
+    return this.#editorKey(editor)
+  }
+
+  renderEditor(editor, model) {
+    return this.#renderEditor(editor, model)
+  }
 
   stop() {
     this.enabled = false
-    if (this.timer) { clearInterval(this.timer); this.timer = null }
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
     this.#snowTyping.stop()
     for (const { decType } of this.editors.values()) {
       const editor = this.#findEditorByDecType(decType)
@@ -90,18 +96,17 @@ class Snowfall {
     if (this.enabled) this.stop()
     else this.start()
     let msg = '❄ Snowfall '
-    if (this.enabled)
-      msg += this.#typingDriven ? 'per keypress (typing-driven)' : 'on empty lines'
-    else
-      msg += 'stopped'
+    if (this.enabled)  msg += this.#typingDriven ? 'per keypress (typing-driven)' : 'on empty lines'
+    else msg += 'stopped'
     vscode.window.setStatusBarMessage(msg, 1500)
   }
+
   #renderEditor(editor, model) {
     // Render all flakes in model.flakes
     const vis = editor.visibleRanges[0]
     if (!vis) return
-  // const top = vis.start.line // unused
-  const bottom = vis.end.line
+    // const top = vis.start.line // unused
+    const bottom = vis.end.line
     const opts = []
     for (const flake of model.flakes) {
       const startLine = Math.max(0, Math.min(editor.document.lineCount - 1, Math.floor(flake.y)))

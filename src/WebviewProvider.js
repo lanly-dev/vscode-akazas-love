@@ -2,6 +2,14 @@ const vscode = require('vscode')
 const path = require('path')
 
 class HappyImageViewProvider {
+  #getHtmlFromFile(imgSrc) {
+    const fs = require('fs')
+    const htmlPath = path.join(this.context.extensionPath, 'webview', 'index.html')
+    let html = fs.readFileSync(htmlPath, 'utf8')
+    html = html.replace('{{IMG_SRC}}', imgSrc)
+    return html
+  }
+
   /** @param {vscode.ExtensionContext} context */
   constructor(context) {
     this.context = context
@@ -12,8 +20,10 @@ class HappyImageViewProvider {
     webviewView.webview.options = {
       enableScripts: true
     }
-    const imgPath = webviewView.webview.asWebviewUri(vscode.Uri.file(path.join(this.context.extensionPath, 'media', 'happy.png')))
-    webviewView.webview.html = this.#html(imgPath)
+    const imgPath = webviewView.webview.asWebviewUri(
+      vscode.Uri.file(path.join(this.context.extensionPath, 'media', 'happy.png'))
+    )
+    webviewView.webview.html = this.#getHtmlFromFile(imgPath)
 
     // Listen for config changes and typing events from extension
     this._webview = webviewView.webview
@@ -24,108 +34,10 @@ class HappyImageViewProvider {
    * @param {object} msg
    */
   postMessage(msg) {
-    if (this._webview)
-      this._webview.postMessage(msg)
+    if (!this._webview) return
+    this._webview.postMessage(msg)
   }
 
-  #html(src) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <style>
-    html, body { padding: 0; margin: 0; background: transparent; }
-    body { display: flex; flex-direction: column; align-items: center; font-family: system-ui, sans-serif; position: relative; }
-  .wrap { width: 100vw; height: 100vh; padding: 0; margin: 0; box-sizing: border-box; position: relative; z-index: 1; overflow: hidden; }
-  img { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: -webkit-optimize-contrast; z-index: 1; background: transparent; }
-  .wrap { display: flex; align-items: center; justify-content: center; }
-    h2 { font-size: 13px; font-weight: 600; margin: 4px 0 8px; text-align: center; }
-    canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
-  </style>
-  <title>Happy</title>
-</head>
-<body>
-  <div class="wrap">
-  <img src="${src}" alt="Happy" />
-    <canvas id="snow"></canvas>
-  </div>
-  <script>
-    const canvas = document.getElementById('snow');
-    const ctx = canvas.getContext('2d');
-    let W = 0, H = 0;
-    function resize() {
-      W = canvas.width = canvas.clientWidth = window.innerWidth;
-      H = canvas.height = canvas.clientHeight = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-    // Snowflake state
-    let typingDriven = false;
-    let speedSensitivity = 3;
-    let typingRate = 0;
-    let density = 80;
-    const flakes = [];
-    function spawnFlake(override) {
-      // override: {speed, y}
-      const v = override && override.speed !== undefined ? override.speed : (0.7 + Math.random() * 1.2);
-      const y = override && override.y !== undefined ? override.y : (-10 - Math.random() * 40);
-      return {
-        x: Math.random() * W,
-        y: y,
-        r: 6 + Math.random() * 8,
-        v: v,
-        a: 0.5 + Math.random() * 0.5,
-        phase: Math.random() * Math.PI * 2,
-        drift: 0.3 + Math.random() * 0.7
-      };
-    }
-    function ensureFlakes() {
-      while (flakes.length < density) flakes.push(spawnFlake());
-      if (flakes.length > density) flakes.splice(density);
-    }
-    function tick() {
-      if (!typingDriven) ensureFlakes();
-      ctx.clearRect(0,0,W,H);
-      ctx.globalCompositeOperation = 'lighter';
-      for (const f of flakes) {
-        f.y += f.v;
-        f.x += Math.sin(f.phase) * f.drift;
-        f.phase += 0.01 + Math.random() * 0.02;
-        if (f.y - f.r > H) { f.y = -f.r; f.x = Math.random()*W; }
-        if (f.x < -20) f.x = W + 20; else if (f.x > W + 20) f.x = -20;
-        const grd = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
-        grd.addColorStop(0, 'rgba(180,220,255,' + (0.9 * f.a) + ')');
-        grd.addColorStop(1, 'rgba(180,220,255,0)');
-        ctx.fillStyle = grd;
-        ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill();
-      }
-      requestAnimationFrame(tick);
-    }
-    tick();
-
-    // Listen for extension messages
-    window.addEventListener('message', event => {
-      const msg = event.data;
-      if (msg && msg.type === 'config') {
-        typingDriven = !!msg.typingDriven;
-        speedSensitivity = msg.speedSensitivity || 3;
-        density = msg.density || 80;
-        if (!typingDriven) {
-          // Reset flakes for normal snow
-          flakes.length = 0;
-        }
-      } else if (msg && msg.type === 'key' && typingDriven) {
-        typingRate = msg.typingRate || 0;
-        // Spawn a flake per keypress, speed based on typing rate
-        const speed = 0.7 + typingRate * speedSensitivity;
-        flakes.push(spawnFlake({ speed, y: -10 }));
-        if (flakes.length > density) flakes.splice(0, flakes.length - density);
-      }
-    });
-  </script>
-</body>
-</html>`
-  }
 }
 
 module.exports = HappyImageViewProvider

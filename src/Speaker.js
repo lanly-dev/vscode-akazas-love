@@ -235,7 +235,7 @@ class Speaker {
     }
   }
 
-  static sendToStreamSpeaker(buffer) {
+  static sendToStreamsSpeaker(buffer) {
     if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) {
       vscode.window.showWarningMessage('play-buffer binary not found or not downloaded')
       return

@@ -1,11 +1,13 @@
 
 const vscode = require('vscode')
-const TypingDrivenSnow = require('./TypingDrivenSnow')
+const snowTyping = require('./SnowTyping')
 
 class Snowfall {
-  #typingDriven = false
+
+  #snowTyping = null
   #speedSensitivity = 3
-  #typingDrivenSnow = null
+  #typingDriven = false
+
   constructor(context) {
     this.context = context
     this.enabled = false
@@ -26,7 +28,7 @@ class Snowfall {
       })
     )
 
-    this.#typingDrivenSnow = new TypingDrivenSnow(this)
+    this.#snowTyping = new snowTyping(this)
     // Load config and start if enabled
     this.#loadConfig()
     if (this.enabled) this.start()
@@ -43,7 +45,7 @@ class Snowfall {
     this.color = cfg.get('snowfall.color', this.color)
     this.#typingDriven = cfg.get('snowfall.typingDriven', false)
     this.#speedSensitivity = Math.max(0.1, Math.min(10, cfg.get('snowfall.speedSensitivity', 3)))
-    this.#typingDrivenSnow.loadConfig(cfg)
+    this.#snowTyping.loadConfig(cfg)
     if (prevEnabled !== this.enabled || prevTypingDriven !== this.#typingDriven)
       if (this.enabled) this.start(); else this.stop()
   }
@@ -53,7 +55,7 @@ class Snowfall {
     this.enabled = true
     this.#resetEditors()
     if (this.#typingDriven)
-      this.#typingDrivenSnow.start()
+      this.#snowTyping.start()
     else
       this.#startNormalSnow()
   }
@@ -63,19 +65,19 @@ class Snowfall {
     const fps = 30
     const dt = 1 / fps
     this.timer = setInterval(() => this.#tick(dt), Math.floor(1000 / fps))
-    this.#typingDrivenSnow.stop()
+    this.#snowTyping.stop()
   }
 
 
 
-  // Expose for TypingDrivenSnow
+  // Expose for snowTyping
   editorKey(editor) { return this.#editorKey(editor) }
   renderEditor(editor, model) { return this.#renderEditor(editor, model) }
 
   stop() {
     this.enabled = false
     if (this.timer) { clearInterval(this.timer); this.timer = null }
-    this.#typingDrivenSnow.stop()
+    this.#snowTyping.stop()
     for (const { decType } of this.editors.values()) {
       const editor = this.#findEditorByDecType(decType)
       if (editor) editor.setDecorations(decType, [])

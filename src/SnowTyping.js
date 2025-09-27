@@ -1,6 +1,6 @@
 const vscode = require('vscode')
 
-class TypingDrivenSnow {
+class SnowTyping {
   constructor(snowfall) {
     this.snowfall = snowfall
     this.enabled = false
@@ -69,4 +69,4 @@ class TypingDrivenSnow {
   }
 }
 
-module.exports = TypingDrivenSnow
+module.exports = SnowTyping

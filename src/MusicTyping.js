@@ -6,8 +6,8 @@ const Speaker = require('./Speaker')
 const MusicSynth = require('./MusicSynth')
 
 class MusicalTyping {
-  #notes
   #currentNoteIdx
+  #notes
 
   constructor(context) {
     this.context = context

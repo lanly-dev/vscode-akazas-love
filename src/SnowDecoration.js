@@ -4,36 +4,37 @@ const vscode = require('vscode')
 
 class SnowDecoration {
 
+  #editors
+  #enabled
+
   #color
+  #density
   #size
   #speed
-  #density
-  #enabled
-  #editors
+
   #timer
 
   constructor() {
     const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
+    this.#enabled = vscode.workspace.getConfiguration('akazas-love.snowInEditor')
+    this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
+
     this.#color = cfg.get('color', '#FFFFFF')
+    this.#density = Math.max(1, Math.min(20, cfg.get('density', 5)))
     this.#size = Math.max(4, Math.min(32, cfg.get('size', 12)))
     this.#speed = Math.max(0.1, Math.min(10, cfg.get('speed', 1)))
-    this.#density = Math.max(1, Math.min(20, cfg.get('density', 5)))
-    this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
+
     this.#timer = null
-    this.#enabled = vscode.workspace.getConfiguration('akazas-love.snowInEditor')
   }
 
-  /** Start snow animation (normal snow) */
   start() {
     console.log('SnowDecoration start with', this.#color, this.#size, this.#speed, this.#density)
     if (this.#timer) return
-    this.#resetEditors(this.#color, this.#size, this.#speed, this.#density)
     const fps = 30
     const dt = 1 / fps
     this.#timer = setInterval(() => this.#tick(dt, this.#color, this.#size, this.#speed), Math.floor(1000 / fps))
   }
 
-  /** Stop snow animation and clear decorations */
   stop() {
     this.enabled = false
     if (this.timer) {
@@ -42,12 +43,21 @@ class SnowDecoration {
     }
     for (const { decType } of this.editors.values())
       decType.dispose()
-
     this.editors.clear()
   }
 
-  /** Render snowflakes in the given editor using the provided model. */
-  renderEditor(editor, model, color, size) {
+  #tick() {
+    if (!this.enabled) return
+    vscode.window.visibleTextEditors.forEach(editor => {
+      const key = editor.document.uri.toString()
+      const model = this.editors.get(key)
+      if (!model) return
+
+      this.renderEditor(editor, model)
+    })
+  }
+
+  renderEditor(editor, model) {
     const vis = editor.visibleRanges[0]
     if (!vis) return
     const bottom = vis.end.line
@@ -62,13 +72,13 @@ class SnowDecoration {
       }
       if (renderLine === -1) continue
       const range = new vscode.Range(renderLine, 0, renderLine, 0)
-      const scale = Math.max(0.3, flake.size / size)
+      const scale = Math.max(0.3, flake.size / this.#size)
       opts.push({
         range,
         renderOptions: {
           before: {
             contentText: '❄',
-            color: this.#rgba(color, flake.opacity),
+            color: this.#rgba(this.#color, flake.opacity),
             textDecoration: `none; position: absolute; left: 0; transform: translateX(${col}ch) scale(${scale.toFixed(3)}); transform-origin: top left; pointer-events: none;`
           }
         }
@@ -77,40 +87,9 @@ class SnowDecoration {
     editor.setDecorations(model.decType, opts)
   }
 
-  // --- Utility methods ---
-  #resetEditors(color, size, density) {
-    for (const { decType } of this.editors.values()) decType.dispose()
-    this.editors.clear()
-    vscode.window.visibleTextEditors.forEach(editor => {
-      const decType = vscode.window.createTextEditorDecorationType({
-        rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen,
-        before: {
-          contentText: '❄',
-          color,
-          fontWeight: 'normal'
-        }
-      })
-      const key = editor.document.uri.toString()
-      const model = { decType, flakes: [], maxColumns: 80 }
-      this.editors.set(key, model)
-      // You may want to spawn flakes here
-    })
-  }
-
-  #tick(dt, color, size, speed) {
-    if (!this.enabled) return
-    vscode.window.visibleTextEditors.forEach(editor => {
-      const key = editor.document.uri.toString()
-      const model = this.editors.get(key)
-      if (!model) return
-      // Move flakes, animate, and render
-      // ... (flake logic omitted for brevity)
-      this.renderEditor(editor, model, color, size)
-    })
-  }
-
   /**
-   * Utility: check if a character at idx in text is whitespace or beyond EOL
+   * Utility: check if a character at idx in text is whitespace or beyond EOL.
+   * @private
    */
   #isWhitespaceAt(text, idx) {
     if (idx >= text.length) return true
@@ -119,7 +98,8 @@ class SnowDecoration {
   }
 
   /**
-   * Utility: convert hex or rgba color to rgba with opacity
+   * Utility: convert hex or rgba color to rgba with opacity.
+   * @private
    */
   #rgba(hexOrRgba, opacity) {
     if (typeof hexOrRgba === 'string' && hexOrRgba.startsWith('#')) {

@@ -1,6 +1,4 @@
-
 const vscode = require('vscode')
-
 
 class SnowDecoration {
 
@@ -25,6 +23,7 @@ class SnowDecoration {
     this.#speed = Math.max(0.1, Math.min(10, cfg.get('speed', 1)))
 
     this.#timer = null
+    this.#setupEditors()
   }
 
   start() {
@@ -41,8 +40,7 @@ class SnowDecoration {
       clearInterval(this.timer)
       this.timer = null
     }
-    for (const { decType } of this.editors.values())
-      decType.dispose()
+    for (const { decType } of this.editors.values()) decType.dispose()
     this.editors.clear()
   }
 
@@ -53,11 +51,40 @@ class SnowDecoration {
       const model = this.editors.get(key)
       if (!model) return
 
-      this.renderEditor(editor, model)
+      this.#renderEditor(editor, model)
     })
   }
 
-  renderEditor(editor, model) {
+  #setupEditors() {
+    vscode.window.visibleTextEditors.forEach(editor => {
+      const key = editor.document.uri.toString()
+      if (this.#editors.has(key)) return // Already set up
+      const decType = vscode.window.createTextEditorDecorationType({
+        rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen,
+        before: {
+          contentText: '❄',
+          color: this.#color,
+          fontWeight: 'normal'
+        }
+      })
+      // Spawn flakes for this editor
+      const flakes = []
+      const lineCount = editor.document.lineCount
+      for (let i = 0; i < this.#density; i++) {
+        flakes.push({
+          x: Math.random() * 80,
+          y: Math.random() * lineCount,
+          size: this.#size,
+          opacity: 0.6 + Math.random() * 0.4
+        })
+      }
+      const model = { decType, flakes, maxColumns: 80 }
+      this.#editors.set(key, model)
+      this.#renderEditor(editor, model)
+    })
+  }
+
+  #renderEditor(editor, model) {
     const vis = editor.visibleRanges[0]
     if (!vis) return
     const bottom = vis.end.line

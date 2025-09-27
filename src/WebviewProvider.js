@@ -2,13 +2,6 @@ const vscode = require('vscode')
 const path = require('path')
 
 class HappyImageViewProvider {
-  #getHtmlFromFile(imgSrc) {
-    const fs = require('fs')
-    const htmlPath = path.join(this.context.extensionPath, 'webview', 'index.html')
-    let html = fs.readFileSync(htmlPath, 'utf8')
-    html = html.replace('{{IMG_SRC}}', imgSrc)
-    return html
-  }
 
   /** @param {vscode.ExtensionContext} context */
   constructor(context) {
@@ -17,9 +10,7 @@ class HappyImageViewProvider {
 
   /** @param {vscode.WebviewView} webviewView */
   resolveWebviewView(webviewView) {
-    webviewView.webview.options = {
-      enableScripts: true
-    }
+    webviewView.webview.options = { enableScripts: true }
     const imgPath = webviewView.webview.asWebviewUri(
       vscode.Uri.file(path.join(this.context.extensionPath, 'media', 'happy.png'))
     )
@@ -38,6 +29,13 @@ class HappyImageViewProvider {
     this._webview.postMessage(msg)
   }
 
+  #getHtmlFromFile(imgSrc) {
+    const fs = require('fs')
+    const htmlPath = path.join(this.context.extensionPath, 'webview', 'index.html')
+    let html = fs.readFileSync(htmlPath, 'utf8')
+    html = html.replace('{{IMG_SRC}}', imgSrc)
+    return html
+  }
 }
 
 module.exports = HappyImageViewProvider

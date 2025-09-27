@@ -28,7 +28,7 @@ async function activate(context) {
   const snowfall = new Snowfall(context)
   const d2 = rc('akazas-love.toggleSnowfall', () => snowfall.toggle())
   const happyProvider = new WebviewProvider(context)
-  const d3 = vscode.window.registerWebviewViewProvider('akazas-love.happyImageView', happyProvider)
+  const d3 = vscode.window.registerWebviewViewProvider('akazas-love.webview', happyProvider)
   context.subscriptions.push(d1, d2, d3, { dispose: () => snowfall.dispose() })
 
   // --- Typing-driven snow integration for webview ---

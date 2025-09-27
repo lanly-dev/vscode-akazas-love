@@ -17,19 +17,19 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "akazas-love-images",
-          "title": "Akaza Images",
-          "icon": "media/image-icon.svg"
+          "id": "akazas-love-webview",
+          "title": "Welcome Home Hakuji 🎆",
+          "icon": "media/akaza.svg"
         }
       ]
     },
     "views": {
-      "akazas-love-images": [
+      "akazas-love-webview": [
         {
           "type": "webview",
-          "id": "akazas-love.happyImageView",
-          "name": "Happy Image",
-          "icon": "media/image-icon.svg"
+          "id": "akazas-love.webview",
+          "name": "Welcome Home Hakuji 🎆",
+          "icon": "media/akaza.svg"
         }
       ]
     },

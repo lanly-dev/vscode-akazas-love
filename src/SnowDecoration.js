@@ -3,21 +3,34 @@ const vscode = require('vscode')
 
 
 class SnowDecoration {
+
+  #color
+  #size
+  #speed
+  #density
+  #enabled
+  #editors
+  #timer
+
   constructor() {
-    this.editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
-    this.timer = null
-    this.enabled = false
+    const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
+    this.#color = cfg.get('color', '#FFFFFF')
+    this.#size = Math.max(4, Math.min(32, cfg.get('size', 12)))
+    this.#speed = Math.max(0.1, Math.min(10, cfg.get('speed', 1)))
+    this.#density = Math.max(1, Math.min(20, cfg.get('density', 5)))
+    this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
+    this.#timer = null
+    this.#enabled = vscode.workspace.getConfiguration('akazas-love.snowInEditor')
   }
 
   /** Start snow animation (normal snow) */
-  start({ color, size, speed, density }) {
-    console.log('SnowDecoration start with', { color, size, speed, density })
-    if (this.timer) return
-    this.enabled = true
-    this.#resetEditors(color, size, density)
+  start() {
+    console.log('SnowDecoration start with', this.#color, this.#size, this.#speed, this.#density)
+    if (this.#timer) return
+    this.#resetEditors(this.#color, this.#size, this.#speed, this.#density)
     const fps = 30
     const dt = 1 / fps
-    this.timer = setInterval(() => this.#tick(dt, color, size, speed), Math.floor(1000 / fps))
+    this.#timer = setInterval(() => this.#tick(dt, this.#color, this.#size, this.#speed), Math.floor(1000 / fps))
   }
 
   /** Stop snow animation and clear decorations */
@@ -27,9 +40,9 @@ class SnowDecoration {
       clearInterval(this.timer)
       this.timer = null
     }
-    for (const { decType } of this.editors.values()) 
+    for (const { decType } of this.editors.values())
       decType.dispose()
-    
+
     this.editors.clear()
   }
 

@@ -11,23 +11,21 @@ class SnowEngine {
     this.#snowDecoration = new SnowDecoration(context)
     this.#snowTyping = new SnowTyping(this.#snowDecoration)
     this.#typingDriven = vscode.workspace.getConfiguration('akazas-love.typingDriven')
-
-    context.subscriptions.concat(this.#setupListeners(context))
+    this.#setupListeners(context)
   }
 
   static #setupListeners(context) {
     const d1 = vscode.workspace.onDidChangeConfiguration(e => {
-      if (!e.affectsConfiguration('akazas-love.snowConfigs')) return
-      const cfg = vscode.workspace.getConfiguration('akazas-love')
-      const typingDriven = cfg.get('akazas-love.typingDriven', false)
-      console.log('SnowManager config changed:', typingDriven, cfg)
-      // this.updateConfig(cfg)
-    })
-
-    const d2 = vscode.workspace.onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.snowInEditor')) return
       const sie = vscode.workspace.getConfiguration('akazas-love.snowInEditor')
       sie ? this.#snowDecoration.start() : this.#snowDecoration.stop()
+    })
+
+    const d2 = vscode.workspace.onDidChangeConfiguration(e => {
+      if (!e.affectsConfiguration('akazas-love.snowConfigs')) return
+      const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
+      console.log('SnowManager config changed:', cfg)
+      // this.updateConfig(cfg)
     })
 
     const d3 = vscode.workspace.onDidChangeConfiguration(e => {

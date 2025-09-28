@@ -63,6 +63,7 @@
           "default": {
             "color": "#ffffffcc",
             "density": 100,
+            "maxColumns": 160,
             "size": 10,
             "speed": 5,
             "speedSensitivity": 3
@@ -79,6 +80,13 @@
               "minimum": 0,
               "maximum": 500,
               "description": "Number of snowflakes per visible editor"
+            },
+            "maxColumns": {
+              "type": "number",
+              "default": 160,
+              "minimum": 80,
+              "maximum": 500,
+              "description": "Maximum number of columns to consider for snowflake placement (higher = more spread out)"
             },
             "size": {
               "type": "number",

@@ -7,6 +7,7 @@ class SnowDecoration {
 
   #color
   #density
+  #maxColumns
   #size
   #speed
 
@@ -21,6 +22,11 @@ class SnowDecoration {
     this.#density = Math.max(1, Math.min(20, cfg.get('density')))
     this.#size = Math.max(4, Math.min(32, cfg.get('size')))
     this.#speed = Math.max(0.1, Math.min(10, cfg.get('speed')))
+    // this.#density = cfg.get('density')
+    // this.#size = cfg.get('size')
+    // this.#speed = cfg.get('speed')
+    // this.#maxColumns = cfg.get('maxColumns')
+    console.log('SnowDecoration config:', { color: this.#color, density: this.#density, size: this.#size, speed: this.#speed, maxColumns: this.#maxColumns })
 
     this.#timer = null
     this.#setupEditors()
@@ -34,7 +40,7 @@ class SnowDecoration {
 
   start() {
     if (this.#timer) {
-      console.trace('SnowDecoration already started')
+      // console.trace('SnowDecoration already started')
       return
     }
     const fps = 30
@@ -59,6 +65,8 @@ class SnowDecoration {
    */
   #tick(dt) {
     vscode.window.visibleTextEditors.forEach(editor => {
+      if (editor.document.uri.scheme !== 'file') return
+      console.log('SnowDecoration tick for editor', editor.document.uri.toString())
       const key = editor.document.uri.toString()
       const model = this.#editors.get(key)
       if (!model) return
@@ -66,15 +74,8 @@ class SnowDecoration {
       if (!vis) return
       const top = vis.start.line
       const bottom = vis.end.line
-      // Estimate max columns by sampling a few visible lines
-      let maxCols = 0
-      const linesVisible = Math.max(1, bottom - top)
-      const sample = Math.min(8, linesVisible)
-      for (let i = 0; i < sample; i++) {
-        const line = Math.min(editor.document.lineCount - 1, top + Math.floor((i * linesVisible) / Math.max(1, sample)))
-        maxCols = Math.max(maxCols, editor.document.lineAt(line).text.length)
-      }
-      model.maxColumns = Math.max(120, maxCols + 40)
+
+      model.maxColumns = this.#maxColumns
 
       // Move flakes: update position, animate size, and recycle if out of view
       const baseSpeed = this.#speed

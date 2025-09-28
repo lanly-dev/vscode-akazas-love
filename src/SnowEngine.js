@@ -18,7 +18,6 @@ class SnowEngine {
     const d1 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.snowInEditor')) return
       const sie = getConfiguration('akazas-love').get('snowInEditor')
-      console.log('SnowManager snowInEditor changed:', sie)
       this.#snowDecoration.loadConfigs()
       sie ? this.#snowDecoration.start() : this.#snowDecoration.stop()
     })
@@ -32,6 +31,7 @@ class SnowEngine {
       if (!e.affectsConfiguration('akazas-love.typingDriven')) return
       this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
       this.#snowDecoration.loadConfigs()
+      this.#webviewProvider?.postMessage({ type: 'config', typingDriven: this.#typingDriven })
     })
 
     const d4 = onDidChangeTextDocument(() => {

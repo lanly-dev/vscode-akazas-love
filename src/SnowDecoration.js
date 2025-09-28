@@ -63,6 +63,29 @@ class SnowDecoration {
     this.#stopping = true
   }
 
+  addFlake() {
+    if (!this.#enabled) return
+    if (this.#typingDriven && this.#typingRate) this.#typingRate.recordKeystroke()
+    vscode.window.visibleTextEditors.forEach(editor => {
+      if (editor.document.uri.scheme !== 'file') return
+      const model = this.#editors.get(editor.document.uri.toString())
+      if (!model) return
+      const vis = editor.visibleRanges[0]
+      const top = vis && vis.start ? vis.start.line : 0
+      model.flakes.push({
+        x: Math.random() * model.maxColumns,
+        y: top,
+        baseSize: this.#size * (0.75 + Math.random() * 0.75),
+        sizePhase: Math.random() * Math.PI * 2,
+        sizeSpeed: 0.5 + Math.random() * 1.5,
+        sizeAmp: 0.25 + Math.random() * 0.35,
+        size: this.#size * (0.75 + Math.random() * 0.75),
+        opacity: 0.6 + Math.random() * 0.4,
+        v: 0.7 + Math.random() * 0.75
+      })
+    })
+  }
+
   /**
    * Advance the snowflake animation for all visible editors.
    * Moves, animates, and recycles flakes, then triggers rendering.
@@ -218,29 +241,6 @@ class SnowDecoration {
         })
       }
     } else if (cur > target) model.flakes.splice(target)
-  }
-
-  addFlake() {
-    if (!this.#enabled) return
-    if (this.#typingDriven && this.#typingRate) this.#typingRate.recordKeystroke()
-    vscode.window.visibleTextEditors.forEach(editor => {
-      if (editor.document.uri.scheme !== 'file') return
-      const model = this.#editors.get(editor.document.uri.toString())
-      if (!model) return
-      const vis = editor.visibleRanges[0]
-      const top = vis && vis.start ? vis.start.line : 0
-      model.flakes.push({
-        x: Math.random() * model.maxColumns,
-        y: top,
-        baseSize: this.#size * (0.75 + Math.random() * 0.75),
-        sizePhase: Math.random() * Math.PI * 2,
-        sizeSpeed: 0.5 + Math.random() * 1.5,
-        sizeAmp: 0.25 + Math.random() * 0.35,
-        size: this.#size * (0.75 + Math.random() * 0.75),
-        opacity: 0.6 + Math.random() * 0.4,
-        v: 0.7 + Math.random() * 0.75
-      })
-    })
   }
 
   /**

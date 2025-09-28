@@ -128,7 +128,7 @@
     // Listen for extension messages
     window.addEventListener('message', event => {
       const msg = event.data
-      if (msg && msg.type === 'config') {
+      if (msg?.type === 'config') {
         typingDriven = !!msg.typingDriven
         speedSensitivity = msg.speedSensitivity || 3
         density = msg.density || 80
@@ -136,7 +136,7 @@
           // Reset flakes for normal snow
           flakes.length = 0
         }
-      } else if (msg && msg.type === 'key' && typingDriven) {
+      } else if (msg?.type === 'key' && typingDriven) {
         typingRate = msg.typingRate || 0
         // Spawn a flake per keypress, speed based on typing rate
         const speed = 0.7 + typingRate * speedSensitivity

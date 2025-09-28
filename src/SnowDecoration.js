@@ -14,36 +14,36 @@ class SnowDecoration {
 
   constructor() {
     const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
-    this.#enabled = vscode
+    this.#enabled = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
     this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
 
-    this.#color = cfg.get('color', '#FFFFFF')
-    this.#density = Math.max(1, Math.min(20, cfg.get('density', 5)))
-    this.#size = Math.max(4, Math.min(32, cfg.get('size', 12)))
-    this.#speed = Math.max(0.1, Math.min(10, cfg.get('speed', 1)))
+    this.#color = cfg.get('color')
+    this.#density = Math.max(1, Math.min(20, cfg.get('density')))
+    this.#size = Math.max(4, Math.min(32, cfg.get('size')))
+    this.#speed = Math.max(0.1, Math.min(10, cfg.get('speed')))
 
-  this.#timer = null
-  this.#setupEditors()
-  if (this.#enabled) this.start()
-  // Listen for editor/range changes to reset flakes
-  vscode.window.onDidChangeActiveTextEditor(() => this.#setupEditors())
-  vscode.window.onDidChangeTextEditorVisibleRanges(() => this.#setupEditors())
+    this.#timer = null
+    this.#setupEditors()
+    if (this.#enabled) this.start()
+
+    // Move to SnowEngine.js
+    // Listen for editor/range changes to reset flakes
+    vscode.window.onDidChangeActiveTextEditor(() => this.#setupEditors())
+    vscode.window.onDidChangeTextEditorVisibleRanges(() => this.#setupEditors())
   }
 
   start() {
-    this.#enabled = true
-    console.log('SnowDecoration start with', this.#color, this.#size, this.#speed, this.#density)
-    if (this.#timer) return
+    if (this.#timer) {
+      console.trace('SnowDecoration already started')
+      return
+    }
     const fps = 30
     const dt = 1 / fps
-    this.#timer = setInterval(() => {
-      console.log('SnowDecoration tick')
-      this.#tick(dt)
-    }, Math.floor(1000 / fps))
+    this.#timer = setInterval(() => { this.#tick(dt) }, Math.floor(1000 / fps))
   }
 
   stop() {
-    this.#enabled = false
+    console.log('SnowDecoration stop')
     if (this.#timer) {
       clearInterval(this.#timer)
       this.#timer = null
@@ -52,8 +52,12 @@ class SnowDecoration {
     this.#editors.clear()
   }
 
-  #tick(dt = 1 / 30) {
-    if (!this.#enabled) return
+  /**
+   * Advance the snowflake animation for all visible editors.
+   * Moves, animates, and recycles flakes, then triggers rendering.
+   * @param {number} dt - Time step in seconds (e.g. 1/30 for 30 FPS).
+   */
+  #tick(dt) {
     vscode.window.visibleTextEditors.forEach(editor => {
       const key = editor.document.uri.toString()
       const model = this.#editors.get(key)
@@ -71,6 +75,7 @@ class SnowDecoration {
         maxCols = Math.max(maxCols, editor.document.lineAt(line).text.length)
       }
       model.maxColumns = Math.max(120, maxCols + 40)
+
       // Move flakes: update position, animate size, and recycle if out of view
       const baseSpeed = this.#speed
       for (let j = 0; j < model.flakes.length; j++) {
@@ -78,15 +83,13 @@ class SnowDecoration {
         // Move flake down by its speed factor
         const dy = baseSpeed * (flake.v !== undefined ? flake.v : 1) * dt
         flake.y += dy
+
         // Animate flake size with a gentle oscillation
-        if (flake.sizePhase === undefined || flake.sizePhase === null)
-          flake.sizePhase = Math.random() * Math.PI * 2
-        if (flake.sizeSpeed === undefined || flake.sizeSpeed === null)
-          flake.sizeSpeed = 0.5 + Math.random() * 1.5
-        if (flake.sizeAmp === undefined || flake.sizeAmp === null)
-          flake.sizeAmp = 0.25 + Math.random() * 0.35
-        if (flake.baseSize === undefined || flake.baseSize === null)
-          flake.baseSize = this.#size * (0.75 + Math.random() * 0.75)
+        flake.sizePhase ??= Math.random() * Math.PI * 2
+        flake.sizeSpeed ??= 0.5 + Math.random() * 1.5
+        flake.sizeAmp ??= 0.25 + Math.random() * 0.35
+        flake.baseSize ??= this.#size * (0.75 + Math.random() * 0.75)
+
         // Advance oscillation phase and compute new size
         flake.sizePhase += flake.sizeSpeed * dt
         const factor = 1 + flake.sizeAmp * Math.sin(flake.sizePhase)
@@ -108,7 +111,7 @@ class SnowDecoration {
         }
       }
       // Ensure flake count matches density
-      this.#ensureFlakeCount(editor, model, linesVisible)
+      this.#ensureFlakeCount(editor, model)
       this.#renderEditor(editor, model)
     })
   }
@@ -138,8 +141,14 @@ class SnowDecoration {
       this.#renderEditor(editor, model)
     })
   }
-  // Ensure the number of flakes matches density and visible area
-  #ensureFlakeCount(editor, model, linesVisible) {
+
+  /**
+   * Ensure the number of snowflakes in the model matches the configured density.
+   * Adds or removes flakes as needed, and spawns new flakes within the visible area.
+   * @param {vscode.TextEditor} editor - The editor for which to manage flakes.
+   * @param {Object} model - The snow model for this editor (contains flakes, decType, maxColumns).
+   */
+  #ensureFlakeCount(editor, model) {
     const target = this.#density
     const cur = model.flakes.length
     const vis = editor.visibleRanges[0]
@@ -162,6 +171,11 @@ class SnowDecoration {
     } else if (cur > target) model.flakes.splice(target)
   }
 
+  /**
+   * Render all snowflakes for a given editor using VS Code decorations.
+   * @param {vscode.TextEditor} editor - The editor to render snowflakes in.
+   * @param {Object} model - The snow model for this editor (contains flakes, decType, maxColumns).
+   */
   #renderEditor(editor, model) {
     const vis = editor.visibleRanges[0]
     if (!vis) return

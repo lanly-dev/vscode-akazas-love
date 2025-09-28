@@ -1,4 +1,4 @@
-const vscode = require('vscode')
+const { workspace: { getConfiguration, onDidChangeConfiguration, onDidChangeTextDocument } } = require('vscode')
 const SnowDecoration = require('./SnowDecoration')
 const SnowTyping = require('./SnowTyping')
 
@@ -10,31 +10,31 @@ class SnowEngine {
   static init(context) {
     this.#snowDecoration = new SnowDecoration(context)
     this.#snowTyping = new SnowTyping(this.#snowDecoration)
-    this.#typingDriven = vscode.workspace.getConfiguration('akazas-love.typingDriven')
+    this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
     this.#setupListeners(context)
   }
 
   static #setupListeners(context) {
-    const d1 = vscode.workspace.onDidChangeConfiguration(e => {
+    const d1 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.snowInEditor')) return
-      const sie = vscode.workspace.getConfiguration('akazas-love.snowInEditor')
+      const sie = getConfiguration('akazas-love').get('snowInEditor')
       sie ? this.#snowDecoration.start() : this.#snowDecoration.stop()
     })
 
-    const d2 = vscode.workspace.onDidChangeConfiguration(e => {
+    const d2 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.snowConfigs')) return
-      const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
+      const cfg = getConfiguration('akazas-love').get('snowConfigs')
       console.log('SnowManager config changed:', cfg)
       // this.updateConfig(cfg)
     })
 
-    const d3 = vscode.workspace.onDidChangeConfiguration(e => {
+    const d3 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.typingDriven')) return
-      this.#typingDriven = vscode.workspace.getConfiguration('akazas-love.typingDriven')
+      this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
       this.#updateMode(this.#typingDriven ? 'TYPING' : 'FALLING')
     })
 
-    const d4 = vscode.workspace.onDidChangeTextDocument(e => {
+    const d4 = onDidChangeTextDocument(e => {
       if (!this.#typingDriven) return
       // setSpeed/keypress
     })

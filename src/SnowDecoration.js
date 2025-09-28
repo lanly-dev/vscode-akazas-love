@@ -2,6 +2,8 @@ const vscode = require('vscode')
 
 class SnowDecoration {
 
+  #FPS = 5
+
   #editors
   #enabled
 
@@ -14,19 +16,8 @@ class SnowDecoration {
   #timer
 
   constructor() {
-    const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
-    this.#enabled = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
-    this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
 
-    this.#color = cfg.get('color')
-    this.#density = Math.max(1, Math.min(20, cfg.get('density')))
-    this.#size = Math.max(4, Math.min(32, cfg.get('size')))
-    this.#speed = Math.max(0.1, Math.min(10, cfg.get('speed')))
-    // this.#density = cfg.get('density')
-    // this.#size = cfg.get('size')
-    // this.#speed = cfg.get('speed')
-    // this.#maxColumns = cfg.get('maxColumns')
-    console.log('SnowDecoration config:', { color: this.#color, density: this.#density, size: this.#size, speed: this.#speed, maxColumns: this.#maxColumns })
+    this.loadConfigs()
 
     this.#timer = null
     if (this.#enabled) this.start()
@@ -37,15 +28,27 @@ class SnowDecoration {
     vscode.window.onDidChangeTextEditorVisibleRanges(() => this.#setupEditors())
   }
 
+  loadConfigs() {
+    const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
+    this.#enabled = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
+    this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
+
+    this.#color = cfg.get('color')
+    this.#density = cfg.get('density')
+    this.#size = cfg.get('size')
+    this.#speed = cfg.get('speed')
+    this.#maxColumns = cfg.get('maxColumns')
+  }
+
   start() {
+    console.log('SnowDecoration start')
     if (this.#timer) {
       // console.trace('SnowDecoration already started')
       return
     }
     this.#setupEditors()
-    const fps = 30
-    const dt = 1 / fps
-    this.#timer = setInterval(() => { this.#tick(dt) }, Math.floor(1000 / fps))
+    const dt = 1 / this.#FPS
+    this.#timer = setInterval(() => { this.#tick(dt) }, Math.floor(1000 / this.#FPS))
   }
 
   stop() {
@@ -124,6 +127,9 @@ class SnowDecoration {
    * @private
    */
   #setupEditors() {
+    console.log('SnowDecoration #setupEditors')
+    console.log(this.#enabled)
+    if (!this.#enabled) return
     // Dispose old decorations
     for (const { decType } of this.#editors.values()) decType.dispose()
     this.#editors.clear()
@@ -138,7 +144,7 @@ class SnowDecoration {
         }
       })
       const key = editor.document.uri.toString()
-      const model = { decType, flakes: [], maxColumns: 120 }
+      const model = { decType, flakes: [], maxColumns: this.#maxColumns }
       this.#editors.set(key, model)
       // Spawn flakes for this editor
       const vis = editor.visibleRanges[0]

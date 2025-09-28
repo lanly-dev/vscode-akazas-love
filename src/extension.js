@@ -4,7 +4,6 @@ const vscode = require('vscode')
 const MusicSynth = require('./MusicSynth')
 const MusicTyping = require('./MusicTyping')
 const SnowEngine = require('./SnowEngine')
-const SnowDecoration = require('./SnowDecoration')
 const Speaker = require('./Speaker')
 const WebviewProvider = require('./WebviewProvider')
 
@@ -26,7 +25,6 @@ async function activate(context) {
   const rc = vscode.commands.registerCommand
   const d1 = rc('akazas-love.playSong', () => MusicSynth.playMidiFile(midiPath))
 
-  const snowDecoration = new SnowDecoration(context)
   const d2 = rc('akazas-love.toggleSnowfall', () => {
     const sie = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
     vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !sie)
@@ -34,7 +32,7 @@ async function activate(context) {
 
   const webviewProvider = new WebviewProvider(context)
   const d3 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
-  context.subscriptions.push(d1, d2, d3, { dispose: () => snowDecoration.dispose() })
+  context.subscriptions.push(d1, d2, d3)
 }
 
 // This method is called when your extension is deactivated

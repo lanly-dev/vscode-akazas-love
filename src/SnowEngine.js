@@ -19,14 +19,13 @@ class SnowEngine {
       if (!e.affectsConfiguration('akazas-love.snowInEditor')) return
       const sie = getConfiguration('akazas-love').get('snowInEditor')
       console.log('SnowManager snowInEditor changed:', sie)
+      this.#snowDecoration.loadConfigs()
       sie ? this.#snowDecoration.start() : this.#snowDecoration.stop()
     })
 
     const d2 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.snowConfigs')) return
-      const cfg = getConfiguration('akazas-love').get('snowConfigs')
-      console.log('SnowManager config changed:', cfg)
-      // this.updateConfig(cfg)
+      this.#snowDecoration.loadConfigs()
     })
 
     const d3 = onDidChangeConfiguration(e => {

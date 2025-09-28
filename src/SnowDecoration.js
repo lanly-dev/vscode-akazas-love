@@ -29,7 +29,6 @@ class SnowDecoration {
     console.log('SnowDecoration config:', { color: this.#color, density: this.#density, size: this.#size, speed: this.#speed, maxColumns: this.#maxColumns })
 
     this.#timer = null
-    this.#setupEditors()
     if (this.#enabled) this.start()
 
     // Move to SnowEngine.js
@@ -43,6 +42,7 @@ class SnowDecoration {
       // console.trace('SnowDecoration already started')
       return
     }
+    this.#setupEditors()
     const fps = 30
     const dt = 1 / fps
     this.#timer = setInterval(() => { this.#tick(dt) }, Math.floor(1000 / fps))
@@ -66,7 +66,6 @@ class SnowDecoration {
   #tick(dt) {
     vscode.window.visibleTextEditors.forEach(editor => {
       if (editor.document.uri.scheme !== 'file') return
-      console.log('SnowDecoration tick for editor', editor.document.uri.toString())
       const key = editor.document.uri.toString()
       const model = this.#editors.get(key)
       if (!model) return
@@ -98,6 +97,7 @@ class SnowDecoration {
         const maxS = flake.baseSize * 1.6
         const s = flake.baseSize * factor
         flake.size = Math.max(minS, Math.min(maxS, s))
+
         // If flake is below the visible area, recycle it to the top
         if (flake.y > bottom + 2) {
           flake.y = top - Math.random() * 3
@@ -117,11 +117,18 @@ class SnowDecoration {
     })
   }
 
+  /**
+   * Set up snowflake models and decorations for all visible editors.
+   * Disposes old decorations, creates new ones, and spawns flakes for each editor.
+   * Called on activation and whenever visible editors or ranges change.
+   * @private
+   */
   #setupEditors() {
     // Dispose old decorations
     for (const { decType } of this.#editors.values()) decType.dispose()
     this.#editors.clear()
     vscode.window.visibleTextEditors.forEach(editor => {
+      if (editor.document.uri.scheme !== 'file') return
       const decType = vscode.window.createTextEditorDecorationType({
         rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen,
         before: {

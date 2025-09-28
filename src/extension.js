@@ -28,7 +28,8 @@ async function activate(context) {
 
   const snowDecoration = new SnowDecoration(context)
   const d2 = rc('akazas-love.toggleSnowfall', () => {
-    vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !snowDecoration.active)
+    const sie = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
+    vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !sie)
   })
 
   const webviewProvider = new WebviewProvider(context)

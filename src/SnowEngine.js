@@ -1,16 +1,16 @@
 const { workspace: { getConfiguration, onDidChangeConfiguration, onDidChangeTextDocument } } = require('vscode')
 const SnowDecoration = require('./SnowDecoration')
-const SnowWebView = require('./SnowWebView')
+const WebviewProvider = require('./WebviewProvider')
 
 class SnowEngine {
   static #snowDecoration
-  static #snowWebview
   static #typingDriven
+  static #webviewProvider
 
   static init(context) {
     this.#snowDecoration = new SnowDecoration(context)
-    this.#snowWebview = new SnowWebView()
     this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
+    this.#webviewProvider = new WebviewProvider(context)
     this.#setupListeners(context)
   }
 

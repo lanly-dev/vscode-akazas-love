@@ -20,7 +20,10 @@ async function activate(context) {
 
   const midiPath = path.join(context.extensionPath, 'media', `akaza's-love-theme.mid`)
   const mtObj = new MusicTyping(context, midiPath)
-  SnowEngine.init(context)
+
+  const webviewProvider = new WebviewProvider(context)
+  const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
+  SnowEngine.init(context, webviewProvider)
 
   const rc = vscode.commands.registerCommand
   const d1 = rc('akazas-love.playSong', () => MusicSynth.playMidiFile(midiPath))
@@ -39,9 +42,7 @@ async function activate(context) {
     vscode.workspace.getConfiguration('akazas-love').update('typingDriven', !sd)
   })
 
-  const webviewProvider = new WebviewProvider(context)
-  const d5 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
-  context.subscriptions.push(d1, d2, d3, d4, d5)
+  context.subscriptions.push(d0, d1, d2, d3, d4)
 }
 
 // This method is called when your extension is deactivated

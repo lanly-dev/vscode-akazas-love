@@ -31,25 +31,16 @@ class SnowEngine {
     const d3 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.typingDriven')) return
       this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
-      this.#updateMode(this.#typingDriven ? 'TYPING' : 'FALLING')
+      this.#snowDecoration.loadConfigs()
     })
 
-    const d4 = onDidChangeTextDocument(e => {
+    const d4 = onDidChangeTextDocument(() => {
       if (!this.#typingDriven) return
-      // setSpeed/keypress
+      console.log('SnowEngine: typing detected, adding flake')
+      this.#snowDecoration.addFlake()
     })
     context.subscriptions.concat([d1, d2, d3, d4])
   }
-
-  static #updateMode(mode) {
-    this.#snowDecoration.updateMode(mode)
-    this.#snowTyping.updateMode(mode)
-  }
-
-  // updateConfig(config) {
-  //   this.snowDecoration.updateConfig(config)
-  //   this.snowTyping.updateConfig(config)
-  // }
 
   // dispose() {
   //   this.snowDecoration.dispose()

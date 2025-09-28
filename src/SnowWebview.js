@@ -1,24 +1,25 @@
 const vscode = require('vscode')
+const TypingRate = require('./TypingRate')
 
-class SnowTyping {
+class SnowWebView {
   constructor(snowfall) {
     this.snowfall = snowfall
-    this.enabled = false
+    this.typingDriven = false
     this.speedSensitivity = 3
-    this.lastKeyTime = 0
-    this.typingRate = 0
     this.typingDisposable = null
+    this.typingRateUtil = new TypingRate()
   }
 
-  loadConfig(cfg) {
-    this.enabled = cfg.get('snowfall.typingDriven', false)
-    this.speedSensitivity = Math.max(0.1, Math.min(10, cfg.get('snowfall.speedSensitivity', 3)))
+  loadConfig() {
+    const cfg1 = vscode.workspace.getConfiguration('akazas-love')
+    const cfg2 = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
+    this.typingDriven = cfg1.get('typingDriven')
+    this.speedSensitivity = cfg2.get('speed', 3)
   }
 
   start() {
     if (this.typingDisposable) this.typingDisposable.dispose()
-    this.lastKeyTime = 0
-    this.typingRate = 0
+    this.typingRateUtil = new TypingRate()
     this.typingDisposable = vscode.workspace.onDidChangeTextDocument((event) => {
       if (!this.enabled) return
       if (!event.contentChanges.length) return
@@ -30,17 +31,12 @@ class SnowTyping {
 
   stop() {
     if (this.typingDisposable) { this.typingDisposable.dispose(); this.typingDisposable = null }
-    this.lastKeyTime = 0
-    this.typingRate = 0
+    this.typingRateUtil = new TypingRate()
   }
 
   onKeyTyped() {
-    const now = Date.now()
-    if (this.lastKeyTime) {
-      const dt = (now - this.lastKeyTime) / 1000
-      this.typingRate = dt > 0 ? 1 / dt : 0
-    }
-    this.lastKeyTime = now
+    this.typingRateUtil.recordKeystroke()
+    const rate = this.typingRateUtil.getRate()
     vscode.window.visibleTextEditors.forEach(editor => {
       const key = this.snowfall.editorKey(editor)
       const model = this.snowfall.editors.get(key)
@@ -57,16 +53,18 @@ class SnowTyping {
         sizeAmp: 0.25 + Math.random() * 0.35,
         size: this.snowfall.size * (0.75 + Math.random() * 0.75),
         opacity: 0.6 + Math.random() * 0.4,
-        v: this.getTypingDrivenSpeed()
+        v: this.getTypingDrivenSpeed(rate)
       })
       if (model.flakes.length > this.snowfall.density) model.flakes.splice(0, model.flakes.length - this.snowfall.density)
       this.snowfall.renderEditor(editor, model)
     })
   }
 
-  getTypingDrivenSpeed() {
-    return this.snowfall.speed + (this.typingRate * this.speedSensitivity)
+  getTypingDrivenSpeed(rate) {
+    // Use provided rate or current TypingRate value
+    const typingRate = rate !== undefined ? rate : this.typingRateUtil.getRate()
+    return this.snowfall.speed + (typingRate * this.speedSensitivity)
   }
 }
 
-module.exports = SnowTyping
+module.exports = SnowWebView

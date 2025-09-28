@@ -1,15 +1,15 @@
 const { workspace: { getConfiguration, onDidChangeConfiguration, onDidChangeTextDocument } } = require('vscode')
 const SnowDecoration = require('./SnowDecoration')
-const SnowTyping = require('./SnowTyping')
+const SnowWebView = require('./SnowWebView')
 
 class SnowEngine {
   static #snowDecoration
-  static #snowTyping
+  static #snowWebview
   static #typingDriven
 
   static init(context) {
     this.#snowDecoration = new SnowDecoration(context)
-    this.#snowTyping = new SnowTyping(this.#snowDecoration)
+    this.#snowWebview = new SnowWebView()
     this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
     this.#setupListeners(context)
   }
@@ -43,7 +43,7 @@ class SnowEngine {
 
   // dispose() {
   //   this.snowDecoration.dispose()
-  //   this.snowTyping.dispose()
+  //   this.snowWebview.dispose()
   // }
 }
 

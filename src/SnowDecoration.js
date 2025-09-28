@@ -2,7 +2,7 @@ const vscode = require('vscode')
 
 class SnowDecoration {
 
-  #FPS = 5
+  #FPS = 15
 
   #editors
   #enabled
@@ -13,12 +13,14 @@ class SnowDecoration {
   #size
   #speed
 
+  #stopping
   #timer
 
   constructor() {
 
     this.loadConfigs()
-
+    this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
+    this.#stopping = false
     this.#timer = null
     if (this.#enabled) this.start()
 
@@ -31,7 +33,6 @@ class SnowDecoration {
   loadConfigs() {
     const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
     this.#enabled = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
-    this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
 
     this.#color = cfg.get('color')
     this.#density = cfg.get('density')
@@ -53,12 +54,7 @@ class SnowDecoration {
 
   stop() {
     console.log('SnowDecoration stop')
-    if (this.#timer) {
-      clearInterval(this.#timer)
-      this.#timer = null
-    }
-    for (const { decType } of this.#editors.values()) decType.dispose()
-    this.#editors.clear()
+    this.#stopping = true
   }
 
   /**
@@ -67,11 +63,14 @@ class SnowDecoration {
    * @param {number} dt - Time step in seconds (e.g. 1/30 for 30 FPS).
    */
   #tick(dt) {
+    console.log('SnowDecoration #tick')
     vscode.window.visibleTextEditors.forEach(editor => {
       if (editor.document.uri.scheme !== 'file') return
       const key = editor.document.uri.toString()
       const model = this.#editors.get(key)
+
       if (!model) return
+
       const vis = editor.visibleRanges[0]
       if (!vis) return
       const top = vis.start.line
@@ -101,8 +100,8 @@ class SnowDecoration {
         const s = flake.baseSize * factor
         flake.size = Math.max(minS, Math.min(maxS, s))
 
-        // If flake is below the visible area, recycle it to the top
-        if (flake.y > bottom + 2) {
+        // If flake is below the visible area, recycle it to the top unless stopping
+        if (flake.y > bottom + 2 && !this.#stopping) {
           flake.y = top - Math.random() * 3
           flake.x = Math.random() * model.maxColumns
           // Reset base visuals for recycled flake
@@ -114,8 +113,23 @@ class SnowDecoration {
           flake.v = 0.7 + Math.random() * 0.75
         }
       }
-      // Ensure flake count matches density
-      this.#ensureFlakeCount(editor, model)
+      console.log('SnowDecoration flakes:', model.flakes.length, 'stopping=', this.#stopping)
+      if (!this.#stopping) {
+        // Ensure flake count matches density
+        this.#ensureFlakeCount(editor, model)
+      } else {
+        // If stopping and all flakes are out of view, clear decorations
+        const allOutOfView = model.flakes.every(flake => flake.y > bottom + 2)
+        if (allOutOfView) {
+          if (this.#timer) {
+            clearInterval(this.#timer)
+            this.#timer = null
+          }
+          for (const { decType } of this.#editors.values()) decType.dispose()
+          this.#editors.clear()
+          this.#stopping = false
+        }
+      }
       this.#renderEditor(editor, model)
     })
   }
@@ -127,12 +141,12 @@ class SnowDecoration {
    * @private
    */
   #setupEditors() {
-    console.log('SnowDecoration #setupEditors')
-    console.log(this.#enabled)
     if (!this.#enabled) return
+
     // Dispose old decorations
     for (const { decType } of this.#editors.values()) decType.dispose()
     this.#editors.clear()
+
     vscode.window.visibleTextEditors.forEach(editor => {
       if (editor.document.uri.scheme !== 'file') return
       const decType = vscode.window.createTextEditorDecorationType({

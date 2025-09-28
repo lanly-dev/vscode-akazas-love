@@ -36,7 +36,6 @@ class SnowEngine {
 
     const d4 = onDidChangeTextDocument(() => {
       if (!this.#typingDriven) return
-      console.log('SnowEngine: typing detected, adding flake')
       this.#snowDecoration.addFlake()
     })
     context.subscriptions.concat([d1, d2, d3, d4])

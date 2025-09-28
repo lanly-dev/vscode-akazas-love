@@ -1,4 +1,5 @@
 const vscode = require('vscode')
+const TypingRate = require('./TypingRate')
 
 class SnowDecoration {
 
@@ -14,15 +15,18 @@ class SnowDecoration {
   #size
   #speed
 
+
   #stopping
   #timer
+  #typingRate
+
 
   constructor() {
-
     this.loadConfigs()
     this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
     this.#stopping = false
     this.#timer = null
+    this.#typingRate = new TypingRate()
     if (this.#enabled) this.start()
 
     // Move to SnowEngine.js
@@ -81,7 +85,15 @@ class SnowDecoration {
       model.maxColumns = this.#maxColumns
 
       // Move flakes: update position, animate size, and recycle if out of view
-      const baseSpeed = this.#speed
+      let baseSpeed = this.#speed * 0.7 // -30% to slow down overall speed
+      // If typingDriven, boost speed based on typing rate
+      if (this.#typingDriven) {
+        const rate = this.#typingRate.getRate()
+        // You can tune the multiplier for how much typing rate affects speed
+        const boost = 1 + rate // e.g. 1x to 2x normal speed for 1 keystroke/sec
+        // Half the speed boost for a gentler effect
+        baseSpeed *= boost * 0.5
+      }
       for (let j = 0; j < model.flakes.length; j++) {
         const flake = model.flakes[j]
         // Move flake down by its speed factor
@@ -185,14 +197,23 @@ class SnowDecoration {
     if (cur < target) {
       for (let i = cur; i < target; i++) {
         model.flakes.push({
+          // Horizontal position (column, in character units)
           x: Math.random() * model.maxColumns,
+          // Vertical position (line, as a float)
           y: top + Math.random() * Math.max(1, bottom - top),
+          // Base font size for the snowflake (randomized for variety)
           baseSize: this.#size * (0.75 + Math.random() * 0.75),
+          // Phase offset for size oscillation (for gentle pulsing)
           sizePhase: Math.random() * Math.PI * 2,
+          // Speed of size oscillation (how fast it "breathes")
           sizeSpeed: 0.5 + Math.random() * 1.5,
+          // Amplitude of size oscillation (how much it grows/shrinks)
           sizeAmp: 0.25 + Math.random() * 0.35,
+          // Current rendered size (calculated each frame)
           size: this.#size * (0.75 + Math.random() * 0.75),
+          // Alpha (transparency), randomized for depth effect
           opacity: 0.6 + Math.random() * 0.4,
+          // Vertical speed multiplier (how fast it falls)
           v: 0.7 + Math.random() * 0.75
         })
       }
@@ -201,6 +222,7 @@ class SnowDecoration {
 
   addFlake() {
     if (!this.#enabled) return
+    if (this.#typingDriven && this.#typingRate) this.#typingRate.recordKeystroke()
     vscode.window.visibleTextEditors.forEach(editor => {
       if (editor.document.uri.scheme !== 'file') return
       const model = this.#editors.get(editor.document.uri.toString())

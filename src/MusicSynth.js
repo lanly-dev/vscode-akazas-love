@@ -2,9 +2,9 @@ const fs = require('fs')
 const pkg = require('@tonejs/midi')
 const { Midi } = pkg
 
-const SAMPLE_RATE = 44100
-
 class MusicSynth {
+
+  static #SAMPLE_RATE = 44100
 
   static generateNote(frequency, duration, startTime, options = {}) {
 
@@ -24,13 +24,13 @@ class MusicSynth {
     // --- Simplified envelope to match browser linear ramp ---
     const attack = 0.005  // Very quick attack
 
-    const samples = Math.floor(SAMPLE_RATE * playDuration)
-    const startSample = Math.floor(SAMPLE_RATE * startTime)
+    const samples = Math.floor(this.#SAMPLE_RATE * playDuration)
+    const startSample = Math.floor(this.#SAMPLE_RATE * startTime)
     const result = { samples, startSample, frequency: freqDetuned, duration: playDuration, options }
     // Output Float32Array PCM (mono, -1.0 to 1.0)
     result.floatBuffer = new Float32Array(samples)
     for (let i = 0; i < samples; i++) {
-      const t = i / SAMPLE_RATE
+      const t = i / this.#SAMPLE_RATE
       let envelope = 0
       if (t <= attack) envelope = t / attack
       else {
@@ -78,7 +78,7 @@ class MusicSynth {
 
     // Calculate total duration
     const totalDuration = Math.max(midi.duration, Math.max(...allNotes.map(n => n.startTime + n.duration))) + 1
-    const totalSamples = Math.floor(SAMPLE_RATE * totalDuration)
+    const totalSamples = Math.floor(this.#SAMPLE_RATE * totalDuration)
 
     console.log(`Total duration: ${totalDuration.toFixed(2)} seconds`)
 
@@ -114,7 +114,7 @@ class MusicSynth {
           chordScale: note.chordScale
         }
       )
-      const startSample = Math.floor(note.startTime * SAMPLE_RATE)
+      const startSample = Math.floor(note.startTime * this.#SAMPLE_RATE)
       for (let i = 0; i < noteResult.samples && startSample + i < totalSamples; i++) {
         finalMix[startSample + i] += noteResult.floatBuffer[i]
         // Clamp to -1.0..1.0

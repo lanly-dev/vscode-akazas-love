@@ -1,7 +1,5 @@
-const path = require('path')
 const vscode = require('vscode')
 
-const MusicSynth = require('./MusicSynth')
 const MusicTyping = require('./MusicTyping')
 const SnowEngine = require('./SnowEngine')
 const Speaker = require('./Speaker')
@@ -18,7 +16,7 @@ async function activate(context) {
     vscode.window.setStatusBarMessage('⚠️ play-buffer setup failed', 3000)
   })
 
-  new MusicTyping(context)
+  MusicTyping.init(context)
 
   const webviewProvider = new WebviewProvider(context)
   const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)

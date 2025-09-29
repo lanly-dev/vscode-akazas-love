@@ -7,13 +7,14 @@ const MusicSynth = require('./MusicSynth')
 
 class MusicalTyping {
 
+  static #context
   static #midiPath
-  #currentNoteIdx
-  #notes
+  static #currentNoteIdx
+  static #notes
 
-  constructor(context) {
-    this.context = context
-    MusicalTyping.#midiPath = path.join(this.context.extensionPath, 'media', `akaza's-love-theme.mid`)
+  static init(context) {
+    this.#context = context
+    this.#midiPath = path.join(this.#context.extensionPath, 'media', `akaza's-love-theme.mid`)
 
     this.#notes = []
     this.#currentNoteIdx = 0
@@ -23,13 +24,73 @@ class MusicalTyping {
     this.#setupEventListeners()
   }
 
-  #loadConfiguration() {
+  static async playMidiFile() {
+    Speaker.sendToSpeaker(await MusicSynth.getMidiFileBuffer(MusicalTyping.#midiPath))
+  }
+
+  playMidiNotes() {
+    if (this.#currentNoteIdx >= this.#notes.length) this.#currentNoteIdx = 0 // Loop back to beginning
+    const chordNotes = this.#notes[this.#currentNoteIdx]
+
+    // Play each note separately
+    chordNotes.forEach(note => {
+      // Use minimum duration for consistent overlapping
+      const playDuration = Math.max(note.duration, .3)
+
+      // Create a single note "song" for MusicSynth to play
+      this.playIndividualNote(note.frequency, playDuration, {
+        velocity: note.velocity * this.volume,
+        chordScale: note.chordScale
+      })
+    })
+
+    // Show current notes in status bar
+    const noteNames = chordNotes.map(n => n.name).join('+')
+    const frequencies = chordNotes.map(n => `${n.frequency.toFixed(1)}Hz`).join(', ')
+    vscode.window.setStatusBarMessage(`🎵 ${noteNames} (${frequencies})`, 1500)
+
+    this.#currentNoteIdx++
+  }
+
+  async playIndividualNote(frequency, duration, options) {
+    const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
+    const pcmBuffer = Buffer.from(noteResult.floatBuffer.buffer)
+    Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
+
+    // Visual feedback
+    const noteName = MusicalTyping.#frequencyToNoteName(frequency)
+    vscode.window.setStatusBarMessage(`♪ ${noteName}`, 800)
+  }
+
+  static #loadConfiguration() {
     const config = vscode.workspace.getConfiguration('akazas-love')
     this.enabled = config.get('musicTyping')
     this.volume = config.get('volume')
   }
 
-  async #loadMidiFile() {
+
+  static #setupEventListeners() {
+    // Listen for text document changes (typing)
+    const changeDisposable = vscode.workspace.onDidChangeTextDocument((event) => {
+      // Only play sound for actual typing (not large pastes)
+      if (!this.enabled || !event.contentChanges.length) return
+      const change = event.contentChanges[0]
+      if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
+      this.playMidiNotes(change.text)
+    })
+
+    // Listen for configuration changes
+    const configDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
+      if (!event.affectsConfiguration('akazas-love.musicTyping')) return
+      this.#loadConfiguration()
+      const message = this.enabled ? '🎶 Musical typing enabled' : '⛔ Musical typing disabled'
+      vscode.window.setStatusBarMessage(message, 3000)
+    })
+    this.#context.subscriptions.push(changeDisposable, configDisposable)
+  }
+
+
+  static async #loadMidiFile() {
     const midiData = fs.readFileSync(this.midiPath)
     const midi = new Midi(midiData)
 
@@ -70,60 +131,6 @@ class MusicalTyping {
     })
   }
 
-  #setupEventListeners() {
-    // Listen for text document changes (typing)
-    const changeDisposable = vscode.workspace.onDidChangeTextDocument((event) => {
-      // Only play sound for actual typing (not large pastes)
-      if (!this.enabled || !event.contentChanges.length) return
-      const change = event.contentChanges[0]
-      if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
-      this.playMidiNotes(change.text)
-    })
-
-    // Listen for configuration changes
-    const configDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
-      if (!event.affectsConfiguration('akazas-love.musicTyping')) return
-      this.#loadConfiguration()
-      const message = this.enabled ? '🎶 Musical typing enabled' : '⛔ Musical typing disabled'
-      vscode.window.setStatusBarMessage(message, 3000)
-    })
-    this.context.subscriptions.push(changeDisposable, configDisposable)
-  }
-
-  playMidiNotes() {
-    if (this.#currentNoteIdx >= this.#notes.length) this.#currentNoteIdx = 0 // Loop back to beginning
-    const chordNotes = this.#notes[this.#currentNoteIdx]
-
-    // Play each note separately
-    chordNotes.forEach(note => {
-      // Use minimum duration for consistent overlapping
-      const playDuration = Math.max(note.duration, .3)
-
-      // Create a single note "song" for MusicSynth to play
-      this.playIndividualNote(note.frequency, playDuration, {
-        velocity: note.velocity * this.volume,
-        chordScale: note.chordScale
-      })
-    })
-
-    // Show current notes in status bar
-    const noteNames = chordNotes.map(n => n.name).join('+')
-    const frequencies = chordNotes.map(n => `${n.frequency.toFixed(1)}Hz`).join(', ')
-    vscode.window.setStatusBarMessage(`🎵 ${noteNames} (${frequencies})`, 1500)
-
-    this.#currentNoteIdx++
-  }
-
-  async playIndividualNote(frequency, duration, options) {
-    const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
-    const pcmBuffer = Buffer.from(noteResult.floatBuffer.buffer)
-    Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
-
-    // Visual feedback
-    const noteName = MusicalTyping.#frequencyToNoteName(frequency)
-    vscode.window.setStatusBarMessage(`♪ ${noteName}`, 800)
-  }
-
   // Convert frequency back to note name for display
   static #frequencyToNoteName(frequency) {
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -131,16 +138,6 @@ class MusicalTyping {
     const octave = Math.floor(midiNote / 12) - 1
     const noteIndex = midiNote % 12
     return `${noteNames[noteIndex]}${octave}`
-  }
-
-  async reloadMidi() {
-    this.#currentNoteIdx = 0
-    await this.loadMidiFile()
-    vscode.window.showInformationMessage('MIDI theme reloaded')
-  }
-
-  static async playMidiFile() {
-    Speaker.sendToSpeaker(await MusicSynth.getMidiFileBuffer(MusicalTyping.#midiPath))
   }
 }
 

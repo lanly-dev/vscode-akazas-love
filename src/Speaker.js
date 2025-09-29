@@ -25,7 +25,6 @@ class Speaker {
     }
     try {
       if (!Speaker.#binaryReady) await Speaker.#downloadPlayBuffer(context)
-      Speaker.startSingleProcess()
       Speaker.startPersistentProcesses()
     } catch (e) {
       console.error('Failed to setup Speaker:', e)
@@ -101,34 +100,6 @@ class Speaker {
       console.error('Speaker.sendToSpeaker catch error:', err2)
     }
   }
-
-  // SINGLE PROCESS METHOD (not used currently) IS SLOW
-  // static sendToStreamsSpeaker(buffer) {
-  //   if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) {
-  //     vscode.window.showWarningMessage('play-buffer binary not found or not downloaded')
-  //     return
-  //   }
-  //   if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
-  //     console.warn('Speaker.sendToSpeaker: Invalid buffer', buffer)
-  //     return
-  //   }
-  //   // Ensure persistent process is running
-  //   Speaker.startPersistentProcess()
-  //   if (!Speaker.#persistentProcess || Speaker.#persistentProcess.killed) {
-  //     vscode.window.showWarningMessage('Persistent play-buffer process is not running')
-  //     return
-  //   }
-  //   try {
-  //     console.log(Speaker.#CHUNK_SIZE)
-  //     for (let i = 0; i < buffer.length; i += Speaker.#CHUNK_SIZE) {
-  //       const chunk = buffer.slice(i, i + Speaker.#CHUNK_SIZE)
-  //       Speaker.#persistentProcess.stdin.write(chunk)
-  //     }
-  //   } catch (e) {
-  //     console.error('Speaker.sendToStreamSpeaker error:', e)
-  //   }
-  // }
-
 
   static async redownloadPlayBuffer(context) {
     await Speaker.#downloadPlayBuffer(context, true)

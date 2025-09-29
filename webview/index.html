@@ -145,9 +145,17 @@
       if (!typingDriven) ensureFlakes()
       ctx.clearRect(0, 0, W, H)
       ctx.globalCompositeOperation = 'lighter'
+      // Calculate boost factor based on typing rate
+      let boost = 1
+      if (typingDriven) {
+        boost = 0.5 + Math.log1p(1 + typingRate) // You can tune this formula for desired effect
+        // Decay typingRate toward 0 if not updated by keypress
+        typingRate *= 0.5
+        if (typingRate < 0.01) typingRate = 0
+      }
       for (const f of flakes) {
-        // Move flake down by its speed (falling)
-        f.y += f.v
+        // Move flake down by its speed (falling), apply boost to all flakes
+        f.y += f.v * boost
         // Move flake horizontally in a sine wave pattern (drifting)
         f.x += Math.sin(f.phase) * f.drift
         // Advance the phase for the next frame (controls drift oscillation)
@@ -157,7 +165,7 @@
         if (f.y - f.r > H) {
           if (!typingDriven) {
             // In normal mode, recycle to the top at a random x
-            f.y = -f.r;
+            f.y = -f.r
             f.x = Math.random() * W
           } else {
             // In typing-driven mode, mark for removal

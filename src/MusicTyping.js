@@ -44,31 +44,7 @@ class MusicalTyping {
     }
   }
 
-  static playMidiNotes() {
-    if (this.#currentNoteIdx >= this.#notes.length) this.#currentNoteIdx = 0 // Loop back to beginning
-    const chordNotes = this.#notes[this.#currentNoteIdx]
-
-    // Play each note separately
-    chordNotes.forEach(note => {
-      // Use minimum duration for consistent overlapping
-      const playDuration = Math.max(note.duration, .3)
-
-      // Create a single note "song" for MusicSynth to play
-      this.playIndividualNote(note.frequency, playDuration, {
-        velocity: note.velocity * this.#volume,
-        chordScale: note.chordScale
-      })
-    })
-
-    // Show current notes in status bar
-    const noteNames = chordNotes.map(n => n.name).join('+')
-    const frequencies = chordNotes.map(n => `${n.frequency.toFixed(1)}Hz`).join(', ')
-    vscode.window.setStatusBarMessage(`🎵 ${noteNames} (${frequencies})`, 1500)
-
-    this.#currentNoteIdx++
-  }
-
-  static async playIndividualNote(frequency, duration, options) {
+  static playIndividualNote(frequency, duration, options) {
     const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
     const pcmBuffer = Buffer.from(noteResult.floatBuffer.buffer)
     Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
@@ -92,7 +68,7 @@ class MusicalTyping {
       const change = event.contentChanges[0]
       if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
       try {
-        this.playMidiNotes(change.text)
+        this.#playMidiNotes(change.text)
       } catch (error) {
         console.error('Error playing MIDI notes:', error)
       }
@@ -108,8 +84,31 @@ class MusicalTyping {
     this.#context.subscriptions.push(changeDisposable, configDisposable)
   }
 
+  static #playMidiNotes() {
+    if (this.#currentNoteIdx >= this.#notes.length) this.#currentNoteIdx = 0 // Loop back to beginning
+    const chordNotes = this.#notes[this.#currentNoteIdx]
 
-  static async #loadMidiFile() {
+    // Play each note separately
+    chordNotes.forEach(note => {
+      // Use minimum duration for consistent overlapping
+      const playDuration = Math.max(note.duration, .3)
+
+      // Create a single note "song" for MusicSynth to play
+      this.playIndividualNote(note.frequency, playDuration, {
+        velocity: note.velocity * this.#volume,
+        chordScale: note.chordScale
+      })
+    })
+
+    // Show current notes in status bar
+    const noteNames = chordNotes.map(n => n.name).join('+')
+    const frequencies = chordNotes.map(n => `${n.frequency.toFixed(1)}Hz`).join(', ')
+    vscode.window.setStatusBarMessage(`🎵 ${noteNames} (${frequencies})`, 1500)
+
+    this.#currentNoteIdx++
+  }
+
+  static #loadMidiFile() {
     const midiData = fs.readFileSync(this.#midiPath)
     const midi = new Midi(midiData)
 

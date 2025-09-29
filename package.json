@@ -73,7 +73,7 @@
           "type": "object",
           "default": {
             "color": "#ffffffcc",
-            "density": 30,
+            "density": 50,
             "maxColumns": 160,
             "size": 10,
             "speed": 5
@@ -86,7 +86,7 @@
             },
             "density": {
               "type": "number",
-              "default": 30,
+              "default": 50,
               "minimum": 0,
               "maximum": 100,
               "description": "Number of snowflakes per visible editor"

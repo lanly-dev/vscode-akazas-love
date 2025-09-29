@@ -61,10 +61,10 @@ class WebviewProvider {
   }
 
   // Convert hex color to rgba string
-  #hexToRgba(hex, alpha = 1) {
+  #hexToRgba(hex) {
     let c = hex.replace('#', '')
     if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2]
-    if (c.length !== 6) return `rgba(180,220,255,${alpha})`
+    if (c.length !== 6) console.error(`invalid hex color: ${hex}, proceeding with 6 characters`)
     const r = parseInt(c.substring(0, 2), 16)
     const g = parseInt(c.substring(2, 4), 16)
     const b = parseInt(c.substring(4, 6), 16)

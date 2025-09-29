@@ -72,7 +72,7 @@
     (function () {
       const debugDiv = document.getElementById('debug-console')
       if (!debugDiv) return
-      debugDiv.style.display = 'none' // Start hidden
+      // debugDiv.style.display = 'none' // Start hidden, comment out to show
       const origLog = console.log
       const maxLines = 40
       console.log = function (...args) {
@@ -178,6 +178,7 @@
         else if (f.x > W + 20) f.x = -20
 
         // Use configured color
+        console.log('snowColor:', snowColor)
         const colorA = snowColor.endsWith(',') ? `${snowColor}${0.9 * f.a})` : snowColor
         const colorB = snowColor.endsWith(',') ? `${snowColor}0)` : snowColor
         const grd = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r)

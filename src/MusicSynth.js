@@ -122,25 +122,16 @@ class MusicSynth {
       }
     })
 
-    // Apply a gentle soft clip and headroom before converting to Int16 to reduce harsh clipping
+    // Apply a gentle soft clip and headroom before returning Float32 PCM
     const headroom = 0.97
     for (let i = 0; i < totalSamples; i++) {
       // soft clip using tanh-like curve; approx with Math.tanh for simplicity
       const x = finalMix[i] * headroom
       finalMix[i] = Math.tanh(x)
     }
-    // Convert Float32Array to Int16Array for output with TPDF dithering
-    const finalBuffer = new Int16Array(totalSamples)
-    for (let i = 0; i < totalSamples; i++) {
-      const dither = (Math.random() - 0.5 + Math.random() - 0.5) * (1 / 32767)
-      let v = finalMix[i] + dither
-      if (v > 1) v = 1
-      else if (v < -1) v = -1
-      finalBuffer[i] = v * 32767
-    }
-    return finalBuffer.buffer
+    // Return Float32 PCM as Buffer (little-endian)
+    return Buffer.from(finalMix.buffer)
   }
-
 }
 
 module.exports = MusicSynth

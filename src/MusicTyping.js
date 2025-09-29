@@ -6,12 +6,14 @@ const Speaker = require('./Speaker')
 const MusicSynth = require('./MusicSynth')
 
 class MusicalTyping {
+
+  static #midiPath
   #currentNoteIdx
   #notes
 
   constructor(context) {
     this.context = context
-    this.midiPath = path.join(this.context.extensionPath, 'media', `akaza's-love-theme.mid`)
+    MusicalTyping.#midiPath = path.join(this.context.extensionPath, 'media', `akaza's-love-theme.mid`)
 
     this.#notes = []
     this.#currentNoteIdx = 0
@@ -137,9 +139,8 @@ class MusicalTyping {
     vscode.window.showInformationMessage('MIDI theme reloaded')
   }
 
-  static async playMidiFile(midiPath) {
-    // This static method doesn't have instance config; default to portaudio for full-file playback
-    Speaker.sendToStreamSpeaker(await MusicSynth.getMidiFileBuffer(midiPath))
+  static async playMidiFile() {
+    Speaker.sendToSpeaker(await MusicSynth.getMidiFileBuffer(MusicalTyping.#midiPath))
   }
 }
 

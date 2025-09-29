@@ -53,11 +53,6 @@ class SnowEngine {
     })
     context.subscriptions.concat([d1, d2, d3, d4])
   }
-
-  // dispose() {
-  //   this.snowDecoration.dispose()
-  //   this.snowWebview.dispose()
-  // }
 }
 
 module.exports = SnowEngine

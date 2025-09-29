@@ -18,15 +18,14 @@ async function activate(context) {
     vscode.window.setStatusBarMessage('⚠️ play-buffer setup failed', 3000)
   })
 
-  const midiPath = path.join(context.extensionPath, 'media', `akaza's-love-theme.mid`)
-  new MusicTyping(context, midiPath)
+  new MusicTyping(context)
 
   const webviewProvider = new WebviewProvider(context)
   const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
   SnowEngine.init(context, webviewProvider)
 
   const rc = vscode.commands.registerCommand
-  const d1 = rc('akazas-love.playSong', () => MusicSynth.playMidiFile(midiPath))
+  const d1 = rc('akazas-love.playSong', () => MusicTyping.playMidiFile())
 
   const d2 = rc('akazas-love.toggleMusicTyping', () => {
     const mt = vscode.workspace.getConfiguration('akazas-love').get('musicTyping')
@@ -46,7 +45,11 @@ async function activate(context) {
 
 // This method is called when your extension is deactivated
 function deactivate() {
-  try { Speaker.stopPersistentProcesses() } catch { }
+  try {
+    Speaker.stopAllProcesses()
+  } catch (e) {
+    vscode.window.showErrorMessage('Error stopping Speaker processes: ' + e.message)
+  }
 }
 
 module.exports = { activate, deactivate }

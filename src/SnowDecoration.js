@@ -48,7 +48,8 @@ class SnowDecoration {
   }
 
   start() {
-    console.log('SnowDecoration start')
+    // console.log('SnowDecoration start')
+    if (this.#stopping) this.#stopping = false
     if (this.#timer) {
       // console.trace('SnowDecoration already started')
       return
@@ -59,7 +60,7 @@ class SnowDecoration {
   }
 
   stop() {
-    console.log('SnowDecoration stop')
+    // console.log('SnowDecoration stop')
     this.#stopping = true
   }
 

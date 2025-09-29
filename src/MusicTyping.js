@@ -82,8 +82,8 @@ class MusicalTyping {
     const configDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
       if (!event.affectsConfiguration('akazas-love.musicTyping')) return
       this.#loadConfiguration()
-      const message = this.enabled ? 'Musical typing enabled' : 'Musical typing disabled'
-      vscode.window.showInformationMessage(message)
+      const message = this.enabled ? '🎶 Musical typing enabled' : '⛔ Musical typing disabled'
+      vscode.window.setStatusBarMessage(message, 3000)
     })
     this.context.subscriptions.push(changeDisposable, configDisposable)
   }

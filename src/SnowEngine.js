@@ -36,7 +36,7 @@ class SnowEngine {
       try {
         this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
         this.#snowDecoration.loadConfigs()
-        this.#webviewProvider.keyPress()
+        this.#webviewProvider.reloadConfigs()
       } catch (error) {
         console.error('Error updating typingDriven config:', error)
       }

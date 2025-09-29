@@ -65,6 +65,27 @@
     <canvas id="snow"
       style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;"></canvas>
   </div>
+  <div id="debug-console"
+    style="width: 100vw; max-height: 120px; overflow-y: auto; background: #222; color: #bcdfff; font-size: 12px; font-family: monospace; padding: 6px 10px; box-sizing: border-box; opacity: 0.85; position: relative; z-index: 10;">
+  </div>
+  <script>
+    (function () {
+      const debugDiv = document.getElementById('debug-console')
+      if (!debugDiv) return
+      debugDiv.style.display = 'none' // Start hidden
+      const origLog = console.log
+      const maxLines = 40
+      console.log = function (...args) {
+        origLog.apply(console, args)
+        const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')
+        debugDiv.innerText += msg + '\n'
+        // Keep only last N lines
+        const lines = debugDiv.innerText.split('\n')
+        if (lines.length > maxLines) debugDiv.innerText = lines.slice(-maxLines).join('\n')
+        debugDiv.scrollTop = debugDiv.scrollHeight
+      }
+    })()
+  </script>
   <script>
 
     window.addEventListener('error', (event) => {
@@ -115,6 +136,7 @@
     }
 
     function ensureFlakes() {
+      console.log('Ensuring flakes, current count:', flakes.length, 'target density:', density)
       while (flakes.length < density) flakes.push(spawnFlake())
       if (flakes.length > density) flakes.splice(density)
     }
@@ -184,12 +206,6 @@
         typingDriven = msg.typingDriven
         density = msg.density
         snowColor = msg.color
-        // Reset flakes for normal snow
-        if (!typingDriven) flakes.length = 0
-        return
-      }
-      if (msg.type === 'TYPING') {
-        typingDriven = msg.typingDriven
         return
       }
       if (msg.type === 'KEY' && typingDriven) {
@@ -198,7 +214,9 @@
         const speed = baseSpeed + typingRate
         flakes.push(spawnFlake({ speed, y: -10 }))
         if (flakes.length > density) flakes.splice(0, flakes.length - density)
+        return
       }
+      console.error('Unknown message type:', msg.type, msg)
     })
   </script>
 </body>

@@ -37,8 +37,8 @@ async function activate(context) {
     vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !sie)
   })
   const d4 = rc('akazas-love.toggleSnowDriven', () => {
-    const sd = vscode.workspace.getConfiguration('akazas-love').get('typingDriven')
-    vscode.workspace.getConfiguration('akazas-love').update('typingDriven', !sd)
+    const td = vscode.workspace.getConfiguration('akazas-love').get('typingDriven')
+    vscode.workspace.getConfiguration('akazas-love').update('typingDriven', !td)
   })
 
   context.subscriptions.push(d0, d1, d2, d3, d4)

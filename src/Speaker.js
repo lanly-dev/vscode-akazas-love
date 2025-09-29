@@ -12,39 +12,11 @@ class Speaker {
   static #binaryPath = null
   static #binaryReady = false
   static #binaryDownloading = false
-  static #persistentProcess = null
 
   // Round-robin pool of up to 10 persistent play-buffer processes
   static #streamPool = []
   static #streamPoolIdx = 0
   static #MAX_STREAMS = 100
-
-  static get #assetName() {
-    const platform = process.platform
-    if (platform === 'win32') return 'play_buffer_windows.exe'
-    if (platform === 'darwin') return 'play_buffer_macos'
-    if (platform === 'linux') return 'play_buffer_linux'
-  }
-
-  static async #getAssetInfo() {
-    // Fetch latest release info from GitHub API
-    const apiUrl = 'https://api.github.com/repos/lanly-dev/play-buffer/releases/latest'
-    const releaseInfo = await new Promise((resolve, reject) => {
-      https.get(apiUrl, { headers: { 'User-Agent': 'akazas-love-extension' } }, (res) => {
-        let data = ''
-        res.on('data', chunk => data += chunk)
-        res.on('end', () => {
-          try { resolve(JSON.parse(data)) }
-          catch (e) { reject(e) }
-        })
-      }).on('error', reject)
-    })
-
-    // Find correct asset for platform
-    const asset = releaseInfo.assets.find(a => a.name === Speaker.#assetName)
-    if (!asset) throw new Error('No compatible binary')
-    return asset
-  }
 
   static async setupSpeaker(context) {
     if (!this.#assetName) {
@@ -53,14 +25,140 @@ class Speaker {
     }
     try {
       if (!Speaker.#binaryReady) await Speaker.#downloadPlayBuffer(context)
+      Speaker.startSingleProcess()
       Speaker.startPersistentProcesses()
     } catch (e) {
       console.error('Failed to setup Speaker:', e)
     }
   }
 
+  static startPersistentProcesses() {
+    try {
+      if (Speaker.#streamPool.length < Speaker.#MAX_STREAMS) {
+        for (let i = Speaker.#streamPool.length; i < Speaker.#MAX_STREAMS; i++) {
+          const proc = spawn(Speaker.#binaryPath, [Speaker.#PLAY_BUFFER_MODE], { stdio: ['pipe', 'ignore', 'ignore'] })
+          proc.on('error', (err) => {
+            console.error('play-buffer pool process error:', err)
+            Speaker.#streamPool[i] = null
+          })
+          proc.on('exit', () => {
+            console.info('play-buffer pool process exited')
+            Speaker.#streamPool[i] = null
+          })
+          Speaker.#streamPool.push(proc)
+        }
+      }
+    } catch (err2) {
+      console.error('Failed to start play-buffer process:', err2)
+      vscode.window.showWarningMessage('Failed to start play-buffer process: ' + err2.message)
+    }
+  }
+
+  static stopAllProcesses() {
+    try {
+      // Kill all stream pool processes
+      for (let proc of Speaker.#streamPool) {
+        if (proc && !proc.killed) {
+          proc.stdin.end()
+          proc.kill()
+        }
+      }
+      Speaker.#streamPool = []
+      Speaker.#streamPoolIdx = 0
+    } catch (e) {
+      console.error('Failed to stop play-buffer processes:', e)
+    }
+  }
+
+  static sendToSpeaker(buffer) {
+    if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) {
+      vscode.window.showErrorMessage('play-buffer binary not found or not downloaded')
+      return
+    }
+    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+      vscode.window.showErrorMessage('PCM buffer is invalid or empty')
+      console.warn('Speaker.sendToSpeaker: Invalid buffer', buffer)
+      return
+    }
+    // PCM format checks (assume 16-bit signed, 44.1kHz, mono)
+    // Optionally, warn if buffer length is suspiciously small
+    const expectedSampleRate = 44100
+    const expectedChannels = 1
+    const expectedBitDepth = 16
+    const isBufferTooShort = buffer.length < expectedSampleRate * expectedChannels * (expectedBitDepth / 8) * 0.1
+    if (isBufferTooShort) console.warn('PCM buffer is very short (less than 0.1s)')
+
+    try {
+      const playProcess = spawn(Speaker.#binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore'] })
+      playProcess.stdin.write(buffer)
+      playProcess.stdin.end()
+      playProcess.on('error', (err) => {
+        vscode.window.showWarningMessage('Failed to play buffer: ' + err.message)
+        console.error('Speaker.sendToSpeaker spawn error:', err)
+      })
+    } catch (err2) {
+      vscode.window.showWarningMessage('Failed to play buffer: ' + err2.message)
+      console.error('Speaker.sendToSpeaker catch error:', err2)
+    }
+  }
+
+  // SINGLE PROCESS METHOD (not used currently) IS SLOW
+  // static sendToStreamsSpeaker(buffer) {
+  //   if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) {
+  //     vscode.window.showWarningMessage('play-buffer binary not found or not downloaded')
+  //     return
+  //   }
+  //   if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+  //     console.warn('Speaker.sendToSpeaker: Invalid buffer', buffer)
+  //     return
+  //   }
+  //   // Ensure persistent process is running
+  //   Speaker.startPersistentProcess()
+  //   if (!Speaker.#persistentProcess || Speaker.#persistentProcess.killed) {
+  //     vscode.window.showWarningMessage('Persistent play-buffer process is not running')
+  //     return
+  //   }
+  //   try {
+  //     console.log(Speaker.#CHUNK_SIZE)
+  //     for (let i = 0; i < buffer.length; i += Speaker.#CHUNK_SIZE) {
+  //       const chunk = buffer.slice(i, i + Speaker.#CHUNK_SIZE)
+  //       Speaker.#persistentProcess.stdin.write(chunk)
+  //     }
+  //   } catch (e) {
+  //     console.error('Speaker.sendToStreamSpeaker error:', e)
+  //   }
+  // }
+
+
   static async redownloadPlayBuffer(context) {
     await Speaker.#downloadPlayBuffer(context, true)
+  }
+
+  static sendToMultipleStreamsSpeaker(buffer) {
+    // Send buffer to next process in pool (round robin)
+    let proc = Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS]
+    if (!proc || proc.killed) {
+      // Restart dead process
+      try {
+        proc = spawn(Speaker.#binaryPath, [Speaker.#PLAY_BUFFER_MODE], { stdio: ['pipe', 'ignore', 'ignore'] })
+        proc.on('error', (err) => {
+          console.error('play-buffer pool process error:', err)
+        })
+        proc.on('exit', () => {
+          Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS] = null
+        })
+        Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS] = proc
+      } catch (e) {
+        console.error('Failed to restart pool process:', e)
+        return
+      }
+    }
+    try {
+      proc.stdin.write(buffer)
+    } catch (e) {
+      console.error('Speaker.sendToMultipleStreamsSpeaker write error:', e)
+    }
+    Speaker.#streamPoolIdx = (Speaker.#streamPoolIdx + 1) % Speaker.#MAX_STREAMS
   }
 
   static async #downloadPlayBuffer(context, force = false) {
@@ -137,128 +235,32 @@ class Speaker {
     })
   }
 
-  static sendToMultipleStreamsSpeaker(buffer) {
-    // Send buffer to next process in pool (round robin)
-    let proc = Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS]
-    if (!proc || proc.killed) {
-      // Restart dead process
-      try {
-        proc = spawn(Speaker.#binaryPath, [Speaker.#PLAY_BUFFER_MODE], { stdio: ['pipe', 'ignore', 'ignore'] })
-        proc.on('error', (err) => {
-          console.error('play-buffer pool process error:', err)
+
+  static get #assetName() {
+    const platform = process.platform
+    if (platform === 'win32') return 'play_buffer_windows.exe'
+    if (platform === 'darwin') return 'play_buffer_macos'
+    if (platform === 'linux') return 'play_buffer_linux'
+  }
+
+  static async #getAssetInfo() {
+    // Fetch latest release info from GitHub API
+    const apiUrl = 'https://api.github.com/repos/lanly-dev/play-buffer/releases/latest'
+    const releaseInfo = await new Promise((resolve, reject) => {
+      https.get(apiUrl, { headers: { 'User-Agent': 'akazas-love-extension' } }, (res) => {
+        let data = ''
+        res.on('data', chunk => data += chunk)
+        res.on('end', () => {
+          try { resolve(JSON.parse(data)) }
+          catch (e) { reject(e) }
         })
-        proc.on('exit', () => {
-          Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS] = null
-        })
-        Speaker.#streamPool[Speaker.#streamPoolIdx % Speaker.#MAX_STREAMS] = proc
-      } catch (e) {
-        console.error('Failed to restart pool process:', e)
-        return
-      }
-    }
-    try {
-      proc.stdin.write(buffer)
-    } catch (e) {
-      console.error('Speaker.sendToMultipleStreamsSpeaker write error:', e)
-    }
-    Speaker.#streamPoolIdx = (Speaker.#streamPoolIdx + 1) % Speaker.#MAX_STREAMS
-  }
+      }).on('error', reject)
+    })
 
-  static startPersistentProcesses() {
-    try {
-      if (Speaker.#streamPool.length < Speaker.#MAX_STREAMS) {
-        for (let i = Speaker.#streamPool.length; i < Speaker.#MAX_STREAMS; i++) {
-          const proc = spawn(Speaker.#binaryPath, [Speaker.#PLAY_BUFFER_MODE], { stdio: ['pipe', 'ignore', 'ignore'] })
-          proc.on('error', (err) => {
-            console.error('play-buffer pool process error:', err)
-            Speaker.#streamPool[i] = null
-          })
-          proc.on('exit', () => {
-            console.info('play-buffer pool process exited')
-            Speaker.#streamPool[i] = null
-          })
-          Speaker.#streamPool.push(proc)
-        }
-      }
-    } catch (err2) {
-      console.error('Failed to start play-buffer process:', err2)
-      vscode.window.showWarningMessage('Failed to start play-buffer process: ' + err2.message)
-    }
-  }
-
-  static stopPersistentProcesses() {
-    try {
-      // Kill all stream pool processes
-      for (let proc of Speaker.#streamPool) {
-        if (proc && !proc.killed) {
-          proc.stdin.end()
-          proc.kill()
-        }
-      }
-      Speaker.#streamPool = []
-      Speaker.#streamPoolIdx = 0
-    } catch (e) {
-      console.error('Failed to stop play-buffer processes:', e)
-    }
-    Speaker.#persistentProcess = null
-  }
-
-  static sendToSpeaker(buffer) {
-    if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) {
-      vscode.window.showErrorMessage('play-buffer binary not found or not downloaded')
-      return
-    }
-    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
-      vscode.window.showErrorMessage('PCM buffer is invalid or empty')
-      console.warn('Speaker.sendToSpeaker: Invalid buffer', buffer)
-      return
-    }
-    // PCM format checks (assume 16-bit signed, 44.1kHz, mono)
-    // Optionally, warn if buffer length is suspiciously small
-    const expectedSampleRate = 44100
-    const expectedChannels = 1
-    const expectedBitDepth = 16
-    const isBufferTooShort = buffer.length < expectedSampleRate * expectedChannels * (expectedBitDepth / 8) * 0.1
-    if (isBufferTooShort) console.warn('PCM buffer is very short (less than 0.1s)')
-
-    try {
-      const playProcess = spawn(Speaker.#binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore'] })
-      playProcess.stdin.write(buffer)
-      playProcess.stdin.end()
-      playProcess.on('error', (err) => {
-        vscode.window.showWarningMessage('Failed to play buffer: ' + err.message)
-        console.error('Speaker.sendToSpeaker spawn error:', err)
-      })
-    } catch (err2) {
-      vscode.window.showWarningMessage('Failed to play buffer: ' + err2.message)
-      console.error('Speaker.sendToSpeaker catch error:', err2)
-    }
-  }
-
-  static sendToStreamsSpeaker(buffer) {
-    if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) {
-      vscode.window.showWarningMessage('play-buffer binary not found or not downloaded')
-      return
-    }
-    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
-      console.warn('Speaker.sendToSpeaker: Invalid buffer', buffer)
-      return
-    }
-    // Ensure persistent process is running
-    Speaker.startPersistentProcess()
-    if (!Speaker.#persistentProcess || Speaker.#persistentProcess.killed) {
-      vscode.window.showWarningMessage('Persistent play-buffer process is not running')
-      return
-    }
-    try {
-      console.log(Speaker.#CHUNK_SIZE)
-      for (let i = 0; i < buffer.length; i += Speaker.#CHUNK_SIZE) {
-        const chunk = buffer.slice(i, i + Speaker.#CHUNK_SIZE)
-        Speaker.#persistentProcess.stdin.write(chunk)
-      }
-    } catch (e) {
-      console.error('Speaker.sendToStreamSpeaker error:', e)
-    }
+    // Find correct asset for platform
+    const asset = releaseInfo.assets.find(a => a.name === Speaker.#assetName)
+    if (!asset) throw new Error('No compatible binary')
+    return asset
   }
 }
 

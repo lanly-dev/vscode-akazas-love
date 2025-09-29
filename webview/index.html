@@ -50,6 +50,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      width: 100vw;
+      height: 100vh;
     }
   </style>
   <title>Welcome Home Hakuji</title>
@@ -57,61 +60,140 @@
 
 <body>
   <div class="wrap">
-    <img src="{{IMG_SRC}}" alt="Welcome Home Hakuji 🎆" />
-    <canvas id="snow"></canvas>
+    <img src="{{IMG_SRC}}" alt="Welcome Home Hakuji 🎆"
+      style="max-width: 100%; max-height: 100%; margin: auto; display: block; position: relative; z-index: 1;" />
+    <canvas id="snow"
+      style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;"></canvas>
+  </div>
+  <div id="debug-console"
+    style="width: 100vw; max-height: 120px; overflow-y: auto; background: #222; color: #bcdfff; font-size: 12px; font-family: monospace; padding: 6px 10px; box-sizing: border-box; opacity: 0.85; position: relative; z-index: 10;">
   </div>
   <script>
-    const canvas = document.getElementById('snow');
-    const ctx = canvas.getContext('2d');
+    (function () {
+      const debugDiv = document.getElementById('debug-console')
+      if (!debugDiv) return
+      // debugDiv.style.display = 'none' // Start hidden, comment out to show
+      const origLog = console.log
+      const maxLines = 40
+      console.log = function (...args) {
+        origLog.apply(console, args)
+        const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')
+        debugDiv.innerText += msg + '\n'
+        // Keep only last N lines
+        const lines = debugDiv.innerText.split('\n')
+        if (lines.length > maxLines) debugDiv.innerText = lines.slice(-maxLines).join('\n')
+        debugDiv.scrollTop = debugDiv.scrollHeight
+      }
+    })()
+  </script>
+  <script>
+
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error || event.message)
+      // Optionally show a message in the UI or send to extension
+    })
+
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason)
+      // Optionally show a message in the UI or send to extension
+    })
+
+    const canvas = document.getElementById('snow')
+    const ctx = canvas.getContext('2d')
     let W = 0
     let H = 0
+
     function resize() {
       W = canvas.width = canvas.clientWidth = window.innerWidth
       H = canvas.height = canvas.clientHeight = window.innerHeight
     }
     window.addEventListener('resize', resize)
     resize()
-    // Snowflake state
-    let typingDriven = false
-    let speedSensitivity = 3
-    let typingRate = 0
-    let density = 80
+
+    let initiated = false
+    let baseSpeed = 0.5
     const flakes = []
-    function spawnFlake(override) {
+    let typingRate = 0
+
+    // Snowflake state
+    let typingDriven
+    let density
+    let snowColor
+
+    function spawnFlake(override = {}) {
       // override: {speed, y}
-      const v = override && override.speed !== undefined ? override.speed : (0.7 + Math.random() * 1.2)
-      const y = override && override.y !== undefined ? override.y : (-10 - Math.random() * 40)
+      const v = override.speed ? override.speed : (baseSpeed + Math.random() * 1.2)
+      const y = override.y ? override.y : (-10 - Math.random() * 40)
       return {
-        x: Math.random() * W,
-        y: y,
-        r: 6 + Math.random() * 8,
-        v: v,
-        a: 0.5 + Math.random() * 0.5,
-        phase: Math.random() * Math.PI * 2,
-        drift: 0.3 + Math.random() * 0.7
+        x: Math.random() * W,               // Horizontal position (random across canvas width)
+        y,                                  // Vertical position (usually above the visible area)
+        r: 15 + Math.random() * 8,          // Radius (size) of the snowflake, 15-23px
+        v,                                  // Vertical speed (fall speed)
+        a: 0.5 + Math.random() * 0.5,       // Alpha (opacity) for gradient, 0.5-1.0
+        phase: Math.random() * Math.PI * 2, // Initial phase for horizontal drift
+        drift: 0.3 + Math.random() * 0.7    // Amplitude of horizontal drift (sway)
       }
     }
+
     function ensureFlakes() {
+      console.log('Ensuring flakes, current count:', flakes.length, 'target density:', density)
       while (flakes.length < density) flakes.push(spawnFlake())
       if (flakes.length > density) flakes.splice(density)
     }
+
     function tick() {
       if (!typingDriven) ensureFlakes()
       ctx.clearRect(0, 0, W, H)
       ctx.globalCompositeOperation = 'lighter'
+      // Calculate boost factor based on typing rate
+      let boost = 1
+      if (typingDriven) {
+        boost = 0.5 + Math.log1p(1 + typingRate) // You can tune this formula for desired effect
+        // Decay typingRate toward 0 if not updated by keypress
+        typingRate *= 0.5
+        if (typingRate < 0.01) typingRate = 0
+      }
       for (const f of flakes) {
-        f.y += f.v
+        // Move flake down by its speed (falling), apply boost to all flakes
+        f.y += f.v * boost
+        // Move flake horizontally in a sine wave pattern (drifting)
         f.x += Math.sin(f.phase) * f.drift
+        // Advance the phase for the next frame (controls drift oscillation)
         f.phase += 0.01 + Math.random() * 0.02
-        if (f.y - f.r > H) { f.y = -f.r; f.x = Math.random() * W }
-        if (f.x < -20) f.x = W + 20; else if (f.x > W + 20) f.x = -20
+
+        // If flake falls below the bottom:
+        if (f.y - f.r > H) {
+          if (!typingDriven) {
+            // In normal mode, recycle to the top at a random x
+            f.y = -f.r
+            f.x = Math.random() * W
+          } else {
+            // In typing-driven mode, mark for removal
+            f._remove = true
+          }
+        }
+
+        // If flake drifts off the left/right edge, wrap it to the opposite side
+        if (f.x < -20) f.x = W + 20
+        else if (f.x > W + 20) f.x = -20
+
+        // Use configured color
+        console.log('snowColor:', snowColor)
+        const colorA = snowColor.endsWith(',') ? `${snowColor}${0.9 * f.a})` : snowColor
+        const colorB = snowColor.endsWith(',') ? `${snowColor}0)` : snowColor
         const grd = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r)
-        grd.addColorStop(0, 'rgba(180,220,255,' + (0.9 * f.a) + ')')
-        grd.addColorStop(1, 'rgba(180,220,255,0)')
+        grd.addColorStop(0, colorA)
+        grd.addColorStop(1, colorB)
         ctx.fillStyle = grd
         ctx.beginPath()
         ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2)
         ctx.fill()
+      }
+      // After updating all flakes, remove those marked for removal (typing-driven mode only)
+      if (typingDriven) {
+        for (let i = flakes.length - 1; i >= 0; i--) {
+          if (flakes[i]._remove) flakes.splice(i, 1)
+        }
       }
       requestAnimationFrame(tick)
     }
@@ -120,21 +202,30 @@
     // Listen for extension messages
     window.addEventListener('message', event => {
       const msg = event.data
-      if (msg && msg.type === 'config') {
-        typingDriven = !!msg.typingDriven
-        speedSensitivity = msg.speedSensitivity || 3
-        density = msg.density || 80
-        if (!typingDriven) {
-          // Reset flakes for normal snow
-          flakes.length = 0
-        }
-      } else if (msg && msg.type === 'key' && typingDriven) {
-        typingRate = msg.typingRate || 0
+      if (!msg) {
+        console.error('Received empty message')
+        return
+      }
+      if (!msg.type) {
+        console.error('Message missing type', msg)
+        return
+      }
+      if (msg.type === 'CONFIG') {
+        initiated = true
+        typingDriven = msg.typingDriven
+        density = msg.density
+        snowColor = msg.color
+        return
+      }
+      if (msg.type === 'KEY' && typingDriven) {
+        typingRate = msg.typingRate
         // Spawn a flake per keypress, speed based on typing rate
-        const speed = 0.7 + typingRate * speedSensitivity
+        const speed = baseSpeed + typingRate
         flakes.push(spawnFlake({ speed, y: -10 }))
         if (flakes.length > density) flakes.splice(0, flakes.length - density)
+        return
       }
+      console.error('Unknown message type:', msg.type, msg)
     })
   </script>
 </body>

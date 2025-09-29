@@ -2,6 +2,7 @@
   "name": "akazas-love",
   "displayName": "Akaza's Love - Musical Typing",
   "description": "Transform your typing into beautiful music with musical note sounds for each keystroke",
+  "publisher": "lanly-dev",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.104.0"
@@ -40,29 +41,42 @@
         "category": "Akaza's Love"
       },
       {
-        "command": "akazas-love.toggleSnowfall",
-        "title": "Toggle Snowfall",
+        "command": "akazas-love.toggleMusicTyping",
+        "title": "Toggle Music Typing",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleSnowInEditor",
+        "title": "Toggle Snowfall in Editor",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleSnowDriven",
+        "title": "Toggle Typing-Driven Snowfall",
         "category": "Akaza's Love"
       }
     ],
     "configuration": {
       "title": "Akaza's Love",
       "properties": {
-        "akazas-love.enabled": {
+        "akazas-love.musicTyping": {
           "type": "boolean",
           "default": true,
           "description": "Enable musical typing sounds"
         },
-        "akazas-love.snowfall": {
+        "akazas-love.snowInEditor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable snowfall overlay in editors"
+        },
+        "akazas-love.snowConfigs": {
           "type": "object",
           "default": {
             "color": "#ffffffcc",
-            "density": 100,
-            "enabled": true,
+            "density": 50,
+            "maxColumns": 160,
             "size": 10,
-            "speed": 5,
-            "speedSensitivity": 3,
-            "typingDriven": false
+            "speed": 5
           },
           "properties": {
             "color": {
@@ -72,15 +86,17 @@
             },
             "density": {
               "type": "number",
-              "default": 100,
+              "default": 50,
               "minimum": 0,
-              "maximum": 500,
+              "maximum": 100,
               "description": "Number of snowflakes per visible editor"
             },
-            "enabled": {
-              "type": "boolean",
-              "default": true,
-              "description": "Enable snowfall overlay in editors"
+            "maxColumns": {
+              "type": "number",
+              "default": 160,
+              "minimum": 80,
+              "maximum": 500,
+              "description": "Maximum number of columns to consider for snowflake placement (higher = more spread out)"
             },
             "size": {
               "type": "number",
@@ -95,21 +111,14 @@
               "minimum": 1,
               "maximum": 10,
               "description": "Snowfall speed in lines per second"
-            },
-            "speedSensitivity": {
-              "type": "number",
-              "default": 3,
-              "minimum": 1,
-              "maximum": 10,
-              "description": "How much typing rate affects snowflake speed (higher = faster, applies to both editor and webview in typing-driven mode)"
-            },
-            "typingDriven": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
             }
           },
           "description": "Snowfall overlay configuration (all snow-related properties)"
+        },
+        "akazas-love.typingDriven": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
         },
         "akazas-love.volume": {
           "type": "number",

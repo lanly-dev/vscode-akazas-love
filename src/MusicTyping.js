@@ -6,16 +6,14 @@ const Speaker = require('./Speaker')
 const MusicSynth = require('./MusicSynth')
 
 class MusicalTyping {
+
+  static #midiPath
   #currentNoteIdx
   #notes
 
   constructor(context) {
     this.context = context
-    this.midiPath = path.join(this.context.extensionPath, 'media', `akaza's-love-theme.mid`)
-
-    // Configuration
-    this.enabled = true
-    this.volume = 0.1
+    MusicalTyping.#midiPath = path.join(this.context.extensionPath, 'media', `akaza's-love-theme.mid`)
 
     this.#notes = []
     this.#currentNoteIdx = 0
@@ -27,8 +25,8 @@ class MusicalTyping {
 
   #loadConfiguration() {
     const config = vscode.workspace.getConfiguration('akazas-love')
-    this.enabled = config.get('enabled', true)
-    this.volume = config.get('volume', 0.1)
+    this.enabled = config.get('musicTyping')
+    this.volume = config.get('volume')
   }
 
   async #loadMidiFile() {
@@ -75,18 +73,19 @@ class MusicalTyping {
   #setupEventListeners() {
     // Listen for text document changes (typing)
     const changeDisposable = vscode.workspace.onDidChangeTextDocument((event) => {
-      if (this.enabled && event.contentChanges.length > 0) {
-        // Only play sound for actual typing (not large pastes)
-        const change = event.contentChanges[0]
-        if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
-        this.playMidiNotes(change.text)
-      }
+      // Only play sound for actual typing (not large pastes)
+      if (!this.enabled || !event.contentChanges.length) return
+      const change = event.contentChanges[0]
+      if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
+      this.playMidiNotes(change.text)
     })
 
     // Listen for configuration changes
     const configDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
-      if (!event.affectsConfiguration('akazas-love')) return
+      if (!event.affectsConfiguration('akazas-love.musicTyping')) return
       this.#loadConfiguration()
+      const message = this.enabled ? '🎶 Musical typing enabled' : '⛔ Musical typing disabled'
+      vscode.window.setStatusBarMessage(message, 3000)
     })
     this.context.subscriptions.push(changeDisposable, configDisposable)
   }
@@ -134,21 +133,14 @@ class MusicalTyping {
     return `${noteNames[noteIndex]}${octave}`
   }
 
-  toggleEnabled() {
-    this.enabled = !this.enabled
-    const message = this.enabled ? 'Musical typing enabled' : 'Musical typing disabled'
-    vscode.window.showInformationMessage(message)
-  }
-
   async reloadMidi() {
     this.#currentNoteIdx = 0
     await this.loadMidiFile()
     vscode.window.showInformationMessage('MIDI theme reloaded')
   }
 
-  static async playMidiFile(midiPath) {
-    // This static method doesn't have instance config; default to portaudio for full-file playback
-    Speaker.sendToStreamSpeaker(await MusicSynth.getMidiFileBuffer(midiPath))
+  static async playMidiFile() {
+    Speaker.sendToSpeaker(await MusicSynth.getMidiFileBuffer(MusicalTyping.#midiPath))
   }
 }
 

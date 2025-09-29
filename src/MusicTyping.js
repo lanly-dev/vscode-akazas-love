@@ -44,7 +44,7 @@ class MusicalTyping {
     }
   }
 
-  playMidiNotes() {
+  static playMidiNotes() {
     if (this.#currentNoteIdx >= this.#notes.length) this.#currentNoteIdx = 0 // Loop back to beginning
     const chordNotes = this.#notes[this.#currentNoteIdx]
 
@@ -68,7 +68,7 @@ class MusicalTyping {
     this.#currentNoteIdx++
   }
 
-  async playIndividualNote(frequency, duration, options) {
+  static async playIndividualNote(frequency, duration, options) {
     const noteResult = MusicSynth.generateNote(frequency, duration, 0, options)
     const pcmBuffer = Buffer.from(noteResult.floatBuffer.buffer)
     Speaker.sendToMultipleStreamsSpeaker(pcmBuffer)
@@ -91,7 +91,11 @@ class MusicalTyping {
       if (!this.#enabled || !event.contentChanges.length) return
       const change = event.contentChanges[0]
       if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
-      this.playMidiNotes(change.text)
+      try {
+        this.playMidiNotes(change.text)
+      } catch (error) {
+        console.error('Error playing MIDI notes:', error)
+      }
     })
 
     // Listen for configuration changes
@@ -106,7 +110,7 @@ class MusicalTyping {
 
 
   static async #loadMidiFile() {
-    const midiData = fs.readFileSync(this.midiPath)
+    const midiData = fs.readFileSync(this.#midiPath)
     const midi = new Midi(midiData)
 
     // Gather all notes from all tracks (same as index.html)

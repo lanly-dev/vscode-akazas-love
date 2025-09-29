@@ -75,8 +75,7 @@
             "density": 30,
             "maxColumns": 160,
             "size": 10,
-            "speed": 5,
-            "speedSensitivity": 3
+            "speed": 5
           },
           "properties": {
             "color": {
@@ -111,13 +110,6 @@
               "minimum": 1,
               "maximum": 10,
               "description": "Snowfall speed in lines per second"
-            },
-            "speedSensitivity": {
-              "type": "number",
-              "default": 3,
-              "minimum": 1,
-              "maximum": 10,
-              "description": "How much typing rate affects snowflake speed (higher = faster, applies to both editor and webview in typing-driven mode)"
             }
           },
           "description": "Snowfall overlay configuration (all snow-related properties)"

@@ -28,7 +28,6 @@ class WebviewProvider {
     const initParams = {
       type: 'config',
       typingDriven: cfg1.get('typingDriven'),
-      speedSensitivity: 0,
       density: cfg2.get('density'),
       color: '#bcdfff',
       speed: cfg2.get('speed')

@@ -148,8 +148,9 @@
       // Calculate boost factor based on typing rate
       let boost = 1
       if (typingDriven) {
-        boost = 0.5 + Math.log1p(1 + typingRate) // You can tune this formula for desired effect
+        boost = 1 + Math.log1p(1 + typingRate) // You can tune this formula for desired effect
         // Decay typingRate toward 0 if not updated by keypress
+        // slow down the boost over time - smaller === faster decay
         typingRate *= 0.5
         if (typingRate < 0.01) typingRate = 0
       }
@@ -219,13 +220,13 @@
       }
       if (msg.type === 'KEY' && typingDriven) {
         typingRate = msg.typingRate
-        // Spawn a flake per keypress, speed based on typing rate
-        const speed = baseSpeed + typingRate
+        // Spawn a flake per keypress, boosted based on log(1 + typingRate)
+        const speed = baseSpeed + Math.log1p(1 + typingRate)
         flakes.push(spawnFlake({ speed, y: -10 }))
         if (flakes.length > density) flakes.splice(0, flakes.length - density)
         return
       }
-      console.error('Unknown message type:', msg.type, msg)
+      console.error('Should not get here, Unknown message type:', msg.type, msg)
     })
   </script>
 </body>

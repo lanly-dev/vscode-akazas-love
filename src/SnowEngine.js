@@ -23,20 +23,28 @@ class SnowEngine {
 
     const d2 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.snowConfigs')) return
-      this.#snowDecoration.loadConfigs()
-      this.#webviewProvider.reloadConfigs()
+      try {
+        this.#snowDecoration.loadConfigs()
+        this.#webviewProvider.reloadConfigs()
+      } catch (error) {
+        console.error('Error reloading snow configs:', error)
+      }
     })
 
     const d3 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.typingDriven')) return
-      this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
-      this.#snowDecoration.loadConfigs()
-      this.#webviewProvider?.postMessage({ type: 'TYPING', typingDriven: this.#typingDriven })
+      try {
+        this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
+        this.#snowDecoration.loadConfigs()
+        this.#webviewProvider.keyPress()
+      } catch (error) {
+        console.error('Error updating typingDriven config:', error)
+      }
     })
 
     const d4 = onDidChangeTextDocument(() => {
+      if (!this.#typingDriven) return
       try {
-        if (!this.#typingDriven) return
         this.#snowDecoration.addFlake()
         this.#webviewProvider.keyPress()
       } catch (error) {

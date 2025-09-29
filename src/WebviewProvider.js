@@ -37,7 +37,7 @@ class WebviewProvider {
   }
 
   reloadConfigs() {
-    this.#postMessage(this.#getConfigs())
+    this.#postMessage({ type: 'CONFIG', ...this.#getConfigs() })
   }
 
   #getConfigs() {

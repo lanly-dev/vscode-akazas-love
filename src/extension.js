@@ -19,7 +19,7 @@ async function activate(context) {
   })
 
   const midiPath = path.join(context.extensionPath, 'media', `akaza's-love-theme.mid`)
-  const mtObj = new MusicTyping(context, midiPath)
+  new MusicTyping(context, midiPath)
 
   const webviewProvider = new WebviewProvider(context)
   const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
@@ -29,9 +29,8 @@ async function activate(context) {
   const d1 = rc('akazas-love.playSong', () => MusicSynth.playMidiFile(midiPath))
 
   const d2 = rc('akazas-love.toggleMusicTyping', () => {
-    const mt = vscode.workspace.getConfiguration('akazas-love').get('MusicTyping')
-    vscode.workspace.getConfiguration('akazas-love').update('MusicTyping', !mt)
-    mtObj.toggleEnabled()
+    const mt = vscode.workspace.getConfiguration('akazas-love').get('musicTyping')
+    vscode.workspace.getConfiguration('akazas-love').update('musicTyping', !mt)
   })
   const d3 = rc('akazas-love.toggleSnowInEditor', () => {
     const sie = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')

@@ -59,7 +59,7 @@
     "configuration": {
       "title": "Akaza's Love",
       "properties": {
-        "akazas-love.MusicTyping": {
+        "akazas-love.musicTyping": {
           "type": "boolean",
           "default": true,
           "description": "Enable musical typing sounds"

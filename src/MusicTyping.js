@@ -23,7 +23,7 @@ class MusicalTyping {
 
   #loadConfiguration() {
     const config = vscode.workspace.getConfiguration('akazas-love')
-    this.enabled = config.get('toggleMusicTyping')
+    this.enabled = config.get('musicTyping')
     this.volume = config.get('volume')
   }
 
@@ -72,7 +72,7 @@ class MusicalTyping {
     // Listen for text document changes (typing)
     const changeDisposable = vscode.workspace.onDidChangeTextDocument((event) => {
       // Only play sound for actual typing (not large pastes)
-      if (!this.enabled && !event.contentChanges.length) return
+      if (!this.enabled || !event.contentChanges.length) return
       const change = event.contentChanges[0]
       if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
       this.playMidiNotes(change.text)
@@ -80,8 +80,10 @@ class MusicalTyping {
 
     // Listen for configuration changes
     const configDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
-      if (!event.affectsConfiguration('akazas-love')) return
+      if (!event.affectsConfiguration('akazas-love.musicTyping')) return
       this.#loadConfiguration()
+      const message = this.enabled ? 'Musical typing enabled' : 'Musical typing disabled'
+      vscode.window.showInformationMessage(message)
     })
     this.context.subscriptions.push(changeDisposable, configDisposable)
   }
@@ -127,12 +129,6 @@ class MusicalTyping {
     const octave = Math.floor(midiNote / 12) - 1
     const noteIndex = midiNote % 12
     return `${noteNames[noteIndex]}${octave}`
-  }
-
-  toggleEnabled() {
-    this.enabled = !this.enabled
-    const message = this.enabled ? 'Musical typing enabled' : 'Musical typing disabled'
-    vscode.window.showInformationMessage(message)
   }
 
   async reloadMidi() {

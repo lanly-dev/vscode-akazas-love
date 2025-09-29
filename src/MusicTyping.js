@@ -9,6 +9,10 @@ class MusicalTyping {
 
   static #context
   static #midiPath
+
+  static #enabled
+  static #volume
+
   static #currentNoteIdx
   static #notes
 
@@ -39,7 +43,7 @@ class MusicalTyping {
 
       // Create a single note "song" for MusicSynth to play
       this.playIndividualNote(note.frequency, playDuration, {
-        velocity: note.velocity * this.volume,
+        velocity: note.velocity * this.#volume,
         chordScale: note.chordScale
       })
     })
@@ -64,8 +68,8 @@ class MusicalTyping {
 
   static #loadConfiguration() {
     const config = vscode.workspace.getConfiguration('akazas-love')
-    this.enabled = config.get('musicTyping')
-    this.volume = config.get('volume')
+    this.#enabled = config.get('musicTyping')
+    this.#volume = config.get('volume')
   }
 
 
@@ -73,7 +77,7 @@ class MusicalTyping {
     // Listen for text document changes (typing)
     const changeDisposable = vscode.workspace.onDidChangeTextDocument((event) => {
       // Only play sound for actual typing (not large pastes)
-      if (!this.enabled || !event.contentChanges.length) return
+      if (!this.#enabled || !event.contentChanges.length) return
       const change = event.contentChanges[0]
       if (change.text.length === 1 && (change.text === '\n' || change.text === '\r\n')) return
       this.playMidiNotes(change.text)
@@ -83,7 +87,7 @@ class MusicalTyping {
     const configDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
       if (!event.affectsConfiguration('akazas-love.musicTyping')) return
       this.#loadConfiguration()
-      const message = this.enabled ? '🎶 Musical typing enabled' : '⛔ Musical typing disabled'
+      const message = this.#enabled ? '🎶 Musical typing enabled' : '⛔ Musical typing disabled'
       vscode.window.setStatusBarMessage(message, 3000)
     })
     this.#context.subscriptions.push(changeDisposable, configDisposable)

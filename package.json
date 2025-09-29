@@ -2,6 +2,7 @@
   "name": "akazas-love",
   "displayName": "Akaza's Love - Musical Typing",
   "description": "Transform your typing into beautiful music with musical note sounds for each keystroke",
+  "publisher": "lanly-dev",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.104.0"

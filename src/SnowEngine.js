@@ -1,16 +1,15 @@
 const { workspace: { getConfiguration, onDidChangeConfiguration, onDidChangeTextDocument } } = require('vscode')
 const SnowDecoration = require('./SnowDecoration')
-const WebviewProvider = require('./WebviewProvider')
 
 class SnowEngine {
   static #snowDecoration
   static #typingDriven
   static #webviewProvider
 
-  static init(context) {
+  static init(context, webviewProvider) {
     this.#snowDecoration = new SnowDecoration(context)
     this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
-    this.#webviewProvider = new WebviewProvider(context)
+    this.#webviewProvider = webviewProvider
     this.#setupListeners(context)
   }
 
@@ -25,18 +24,24 @@ class SnowEngine {
     const d2 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.snowConfigs')) return
       this.#snowDecoration.loadConfigs()
+      this.#webviewProvider.reloadConfigs()
     })
 
     const d3 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.typingDriven')) return
       this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
       this.#snowDecoration.loadConfigs()
-      this.#webviewProvider?.postMessage({ type: 'config', typingDriven: this.#typingDriven })
+      this.#webviewProvider?.postMessage({ type: 'TYPING', typingDriven: this.#typingDriven })
     })
 
     const d4 = onDidChangeTextDocument(() => {
-      if (!this.#typingDriven) return
-      this.#snowDecoration.addFlake()
+      try {
+        if (!this.#typingDriven) return
+        this.#snowDecoration.addFlake()
+        this.#webviewProvider.keyPress()
+      } catch (error) {
+        console.error('Error in text document change handler:', error)
+      }
     })
     context.subscriptions.concat([d1, d2, d3, d4])
   }

@@ -1,14 +1,17 @@
 const vscode = require('vscode')
 const path = require('path')
+const TypingRate = require('./TypingRate')
 
 class WebviewProvider {
 
   #context
+  #typingRate
   #webview
 
   /** @param {vscode.ExtensionContext} context */
   constructor(context) {
     this.#context = context
+    this.#typingRate = new TypingRate()
   }
 
   /** @param {vscode.WebviewView} webviewView */
@@ -22,18 +25,31 @@ class WebviewProvider {
     // Listen for config changes and typing events from extension
     this.#webview = webviewView.webview
 
+
     // Inject initial params
+    setTimeout(() => this.#postMessage(this.#getConfigs()), 100)
+  }
+
+  keyPress() {
+    this.#typingRate.recordKeystroke()
+    const typingRate = this.#typingRate.getRate()
+    this.#postMessage({ type: 'KEY', typingRate })
+  }
+
+  reloadConfigs() {
+    this.#postMessage(this.#getConfigs())
+  }
+
+  #getConfigs() {
     const cfg1 = vscode.workspace.getConfiguration('akazas-love')
     const cfg2 = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
 
-    const initParams = {
+    return {
       type: 'CONFIG',
       typingDriven: cfg1.get('typingDriven'),
       density: cfg2.get('density'),
-      color: this.#hexToRgba('#bcdfff'),
-      speed: cfg2.get('speed')
+      color: this.#hexToRgba('#bcdfff')
     }
-    setTimeout(() => this.#postMessage(initParams), 100)
   }
 
   #getHtmlFromFile(imgSrc) {
@@ -60,7 +76,6 @@ class WebviewProvider {
    * @param {object} msg
    */
   #postMessage(msg) {
-    if (!this.#webview) return
     this.#webview.postMessage(msg)
   }
 }

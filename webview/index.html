@@ -66,6 +66,17 @@
       style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;"></canvas>
   </div>
   <script>
+
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error || event.message)
+      // Optionally show a message in the UI or send to extension
+    })
+
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason)
+      // Optionally show a message in the UI or send to extension
+    })
+
     const canvas = document.getElementById('snow')
     const ctx = canvas.getContext('2d')
     let W = 0
@@ -78,14 +89,16 @@
     window.addEventListener('resize', resize)
     resize()
 
-    // Snowflake state
-    let typingDriven = false
-    let typingRate = 0
-    let density = 80
-    let snowColor = 'rgba(180,220,255,' // default fallback
-    let baseSpeed = 0.7
-
+    let initiated = false
+    let baseSpeed = 0.5
     const flakes = []
+    let typingRate = 0
+
+    // Snowflake state
+    let typingDriven
+    let density
+    let snowColor
+
     function spawnFlake(override = {}) {
       // override: {speed, y}
       const v = override.speed ? override.speed : (baseSpeed + Math.random() * 1.2)
@@ -111,11 +124,29 @@
       ctx.clearRect(0, 0, W, H)
       ctx.globalCompositeOperation = 'lighter'
       for (const f of flakes) {
+        // Move flake down by its speed (falling)
         f.y += f.v
+        // Move flake horizontally in a sine wave pattern (drifting)
         f.x += Math.sin(f.phase) * f.drift
+        // Advance the phase for the next frame (controls drift oscillation)
         f.phase += 0.01 + Math.random() * 0.02
-        if (f.y - f.r > H) { f.y = -f.r; f.x = Math.random() * W }
-        if (f.x < -20) f.x = W + 20; else if (f.x > W + 20) f.x = -20
+
+        // If flake falls below the bottom:
+        if (f.y - f.r > H) {
+          if (!typingDriven) {
+            // In normal mode, recycle to the top at a random x
+            f.y = -f.r;
+            f.x = Math.random() * W
+          } else {
+            // In typing-driven mode, mark for removal
+            f._remove = true
+          }
+        }
+
+        // If flake drifts off the left/right edge, wrap it to the opposite side
+        if (f.x < -20) f.x = W + 20
+        else if (f.x > W + 20) f.x = -20
+
         // Use configured color
         const colorA = snowColor.endsWith(',') ? `${snowColor}${0.9 * f.a})` : snowColor
         const colorB = snowColor.endsWith(',') ? `${snowColor}0)` : snowColor
@@ -126,6 +157,12 @@
         ctx.beginPath()
         ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2)
         ctx.fill()
+      }
+      // After updating all flakes, remove those marked for removal (typing-driven mode only)
+      if (typingDriven) {
+        for (let i = flakes.length - 1; i >= 0; i--) {
+          if (flakes[i]._remove) flakes.splice(i, 1)
+        }
       }
       requestAnimationFrame(tick)
     }
@@ -143,12 +180,16 @@
         return
       }
       if (msg.type === 'CONFIG') {
+        initiated = true
         typingDriven = msg.typingDriven
         density = msg.density
         snowColor = msg.color
-        baseSpeed = msg.speed
         // Reset flakes for normal snow
         if (!typingDriven) flakes.length = 0
+        return
+      }
+      if (msg.type === 'TYPING') {
+        typingDriven = msg.typingDriven
         return
       }
       if (msg.type === 'KEY' && typingDriven) {

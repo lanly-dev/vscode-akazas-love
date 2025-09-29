@@ -92,7 +92,6 @@ class SnowDecoration {
    * @param {number} dt - Time step in seconds (e.g. 1/30 for 30 FPS).
    */
   #tick(dt) {
-    console.log('SnowDecoration #tick')
     vscode.window.visibleTextEditors.forEach(editor => {
       if (editor.document.uri.scheme !== 'file') return
       const key = editor.document.uri.toString()
@@ -113,7 +112,7 @@ class SnowDecoration {
       if (this.#typingDriven) {
         const rate = this.#typingRate.getRate()
         // You can tune the multiplier for how much typing rate affects speed
-        const boost = 1 + rate // e.g. 1x to 2x normal speed for 1 keystroke/sec
+        const boost = 0.5 + rate // Can't be zero or stop falling?
         // Half the speed boost for a gentler effect
         baseSpeed *= boost * 0.5
       }

@@ -41,6 +41,11 @@
         "category": "Akaza's Love"
       },
       {
+        "command": "akazas-love.stopSong",
+        "title": "Stop Akaza's Love Theme",
+        "category": "Akaza's Love"
+      },
+      {
         "command": "akazas-love.toggleMusicTyping",
         "title": "Toggle Music Typing",
         "category": "Akaza's Love"

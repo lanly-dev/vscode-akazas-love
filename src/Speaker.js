@@ -13,7 +13,10 @@ class Speaker {
   static #binaryReady = false
   static #binaryDownloading = false
 
-  // Round-robin pool of up to 10 persistent play-buffer processes
+  // Store the last playProcess for stopping
+  static #currentPlayProcess = null
+
+  // Round-robin pool of up to 100 persistent play-buffer stream processes
   static #streamPool = []
   static #streamPoolIdx = 0
   static #MAX_STREAMS = 100
@@ -88,17 +91,43 @@ class Speaker {
     if (isBufferTooShort) console.warn('PCM buffer is very short (less than 0.1s)')
 
     try {
+      // Kill any previous playProcess
+      if (Speaker.#currentPlayProcess && !Speaker.#currentPlayProcess.killed) {
+        try {
+          Speaker.#currentPlayProcess.stdin.end()
+          Speaker.#currentPlayProcess.kill()
+        } catch (e) {
+          console.error('Failed to kill previous playProcess:', e)
+        }
+      }
       const playProcess = spawn(Speaker.#binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore'] })
+      Speaker.#currentPlayProcess = playProcess
       playProcess.stdin.write(buffer)
       playProcess.stdin.end()
       playProcess.on('error', (err) => {
         vscode.window.showWarningMessage('Failed to play buffer: ' + err.message)
         console.error('Speaker.sendToSpeaker spawn error:', err)
       })
+      playProcess.on('exit', () => {
+        Speaker.#currentPlayProcess = null
+      })
     } catch (err2) {
       vscode.window.showWarningMessage('Failed to play buffer: ' + err2.message)
       console.error('Speaker.sendToSpeaker catch error:', err2)
     }
+  }
+
+  // Stop the last playProcess started by sendToSpeaker
+  static stopToSpeaker() {
+    if (Speaker.#currentPlayProcess && !Speaker.#currentPlayProcess.killed) {
+      try {
+        Speaker.#currentPlayProcess.stdin.end()
+        Speaker.#currentPlayProcess.kill()
+      } catch (e) {
+        console.error('Failed to stop playProcess:', e)
+      }
+      Speaker.#currentPlayProcess = null
+    } else vscode.window.showInformationMessage('No active play process to stop')
   }
 
   static async redownloadPlayBuffer(context) {

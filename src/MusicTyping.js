@@ -1,7 +1,8 @@
-const vscode = require('vscode')
 const { Midi } = require('@tonejs/midi')
 const fs = require('fs')
 const path = require('path')
+const vscode = require('vscode')
+
 const Speaker = require('./Speaker')
 const MusicSynth = require('./MusicSynth')
 
@@ -26,10 +27,21 @@ class MusicalTyping {
     this.#loadConfiguration()
     this.#loadMidiFile()
     this.#setupEventListeners()
+
+    this.stopBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
+    this.stopBtn.command = 'akazas-love.stopSong'
+    this.stopBtn.text = '⏸️ Stop'
+    this.#context.subscriptions.push(this.stopBtn)
   }
 
-  static async playMidiFile() {
-    Speaker.sendToSpeaker(await MusicSynth.getMidiFileBuffer(MusicalTyping.#midiPath))
+  static async playMidiFile(needPlay) {
+    if (needPlay) {
+      Speaker.sendToSpeaker(await MusicSynth.getMidiFileBuffer(MusicalTyping.#midiPath))
+      this.stopBtn.show()
+    } else {
+      Speaker.stopToSpeaker()
+      this.stopBtn.hide()
+    }
   }
 
   playMidiNotes() {
@@ -71,7 +83,6 @@ class MusicalTyping {
     this.#enabled = config.get('musicTyping')
     this.#volume = config.get('volume')
   }
-
 
   static #setupEventListeners() {
     // Listen for text document changes (typing)

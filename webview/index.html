@@ -82,20 +82,22 @@
     let typingDriven = false
     let typingRate = 0
     let density = 80
+    let snowColor = 'rgba(180,220,255,' // default fallback
+    let baseSpeed = 0.7
 
     const flakes = []
     function spawnFlake(override = {}) {
       // override: {speed, y}
-      const v = override.speed ? override.speed : (0.7 + Math.random() * 1.2)
+      const v = override.speed ? override.speed : (baseSpeed + Math.random() * 1.2)
       const y = override.y ? override.y : (-10 - Math.random() * 40)
       return {
-        x: Math.random() * W,
-        y,
-        r: 6 + Math.random() * 8,
-        v,
-        a: 0.5 + Math.random() * 0.5,
-        phase: Math.random() * Math.PI * 2,
-        drift: 0.3 + Math.random() * 0.7
+        x: Math.random() * W,               // Horizontal position (random across canvas width)
+        y,                                  // Vertical position (usually above the visible area)
+        r: 15 + Math.random() * 8,          // Radius (size) of the snowflake, 15-23px
+        v,                                  // Vertical speed (fall speed)
+        a: 0.5 + Math.random() * 0.5,       // Alpha (opacity) for gradient, 0.5-1.0
+        phase: Math.random() * Math.PI * 2, // Initial phase for horizontal drift
+        drift: 0.3 + Math.random() * 0.7    // Amplitude of horizontal drift (sway)
       }
     }
 
@@ -114,9 +116,12 @@
         f.phase += 0.01 + Math.random() * 0.02
         if (f.y - f.r > H) { f.y = -f.r; f.x = Math.random() * W }
         if (f.x < -20) f.x = W + 20; else if (f.x > W + 20) f.x = -20
+        // Use configured color
+        const colorA = snowColor.endsWith(',') ? `${snowColor}${0.9 * f.a})` : snowColor
+        const colorB = snowColor.endsWith(',') ? `${snowColor}0)` : snowColor
         const grd = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r)
-        grd.addColorStop(0, `rgba(180,220,255,${0.9 * f.a})`)
-        grd.addColorStop(1, 'rgba(180,220,255,0)')
+        grd.addColorStop(0, colorA)
+        grd.addColorStop(1, colorB)
         ctx.fillStyle = grd
         ctx.beginPath()
         ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2)
@@ -138,16 +143,18 @@
         return
       }
       if (msg.type === 'CONFIG') {
-        typingDriven = !!msg.typingDriven
-        density = msg.density || 80
+        typingDriven = msg.typingDriven
+        density = msg.density
+        snowColor = msg.color
+        baseSpeed = msg.speed
         // Reset flakes for normal snow
         if (!typingDriven) flakes.length = 0
         return
       }
       if (msg.type === 'KEY' && typingDriven) {
-        typingRate = msg.typingRate || 0
+        typingRate = msg.typingRate
         // Spawn a flake per keypress, speed based on typing rate
-        const speed = msg.speed + typingRate
+        const speed = baseSpeed + typingRate
         flakes.push(spawnFlake({ speed, y: -10 }))
         if (flakes.length > density) flakes.splice(0, flakes.length - density)
       }

@@ -26,7 +26,7 @@ class WebviewProvider {
     const cfg1 = vscode.workspace.getConfiguration('akazas-love')
     const cfg2 = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
     const initParams = {
-      type: 'config',
+      type: 'CONFIG',
       typingDriven: cfg1.get('typingDriven'),
       density: cfg2.get('density'),
       color: '#bcdfff',

@@ -115,7 +115,7 @@
         if (f.y - f.r > H) { f.y = -f.r; f.x = Math.random() * W }
         if (f.x < -20) f.x = W + 20; else if (f.x > W + 20) f.x = -20
         const grd = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r)
-        grd.addColorStop(0, 'rgba(180,220,255,' + (0.9 * f.a) + ')')
+        grd.addColorStop(0, `rgba(180,220,255,${0.9 * f.a})`)
         grd.addColorStop(1, 'rgba(180,220,255,0)')
         ctx.fillStyle = grd
         ctx.beginPath()
@@ -130,30 +130,26 @@
     window.addEventListener('message', event => {
       const msg = event.data
       if (!msg) {
-        console.error('No message received')
+        console.error('Received empty message')
         return
       }
       if (!msg.type) {
         console.error('Message missing type', msg)
         return
       }
-      if (msg.type === 'init') {
-
-      }
-      if (msg.type === 'config') {
+      if (msg.type === 'CONFIG') {
         typingDriven = !!msg.typingDriven
         density = msg.density || 80
         // Reset flakes for normal snow
         if (!typingDriven) flakes.length = 0
         return
       }
-      if (msg.type === 'key' && typingDriven) {
+      if (msg.type === 'KEY' && typingDriven) {
         typingRate = msg.typingRate || 0
         // Spawn a flake per keypress, speed based on typing rate
-        const speed = 0.7 + typingRate
+        const speed = msg.speed + typingRate
         flakes.push(spawnFlake({ speed, y: -10 }))
         if (flakes.length > density) flakes.splice(0, flakes.length - density)
-        return
       }
     })
   </script>

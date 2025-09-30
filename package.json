@@ -37,47 +37,151 @@
     "commands": [
       {
         "command": "akazas-love.playSong",
-        "title": "Play Akaza's Love Theme",
+        "title": "▶️ Play Akaza's Love Theme",
+        "icon": "$(play)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.stopSong",
-        "title": "Stop Akaza's Love Theme",
+        "title": "⏹️ Stop Akaza's Love Theme",
+        "icon": "$(stop)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.toggleMusicTyping",
-        "title": "Toggle Music Typing",
+        "title": "🎹 Toggle Music Typing",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleMusicTypingOn",
+        "title": "🎹🎵😊",
+        "icon": "$(piano)",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleMusicTypingOff",
+        "title": "⛔🔇🫥",
+        "icon": "$(mute)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.toggleSnowInEditor",
-        "title": "Toggle Snowfall in Editor",
+        "title": "❄️ Toggle Snowfall in Editor",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleSnowInEditorOn",
+        "title": "❄️ Snowing in Editor",
+        "icon": "$(cloud-download)",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleSnowInEditorOff",
+        "title": "⛔ No Snow in Editor",
+        "icon": "$(cloud-upload)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.toggleSnowDriven",
-        "title": "Toggle Typing-Driven Snowfall",
+        "title": "⌨️ Toggle Typing-Driven Snowfall",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleSnowDrivenOn",
+        "title": "⌨️ type to make it snow",
+        "icon": "$(keyboard)",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleSnowDrivenOff",
+        "title": "🌨️🌨️🌨️🌨️🌨️",
+        "icon": "$(cloud)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.showPanel",
-        "title": "Show Akaza's Love Panel",
+        "title": "🥹 Show Akaza's Love Panel",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.openSettings",
-        "title": "Open Akaza's Love Settings",
+        "title": "⚙️ Open Akaza's Love Settings",
         "icon": "$(gear)",
         "category": "Akaza's Love"
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "akazas-love.toggleMusicTypingOn",
+          "when": "false"
+        },
+        {
+          "command": "akazas-love.toggleMusicTypingOff",
+          "when": "false"
+        },
+        {
+          "command": "akazas-love.toggleSnowDrivenOn",
+          "when": "false"
+        },
+        {
+          "command": "akazas-love.toggleSnowDrivenOff",
+          "when": "false"
+        },
+        {
+          "command": "akazas-love.toggleSnowInEditorOn",
+          "when": "false"
+        },
+        {
+          "command": "akazas-love.toggleSnowInEditorOff",
+          "when": "false"
+        }
+      ],
       "view/title": [
+        {
+          "command": "akazas-love.playSong",
+          "when": "akazas-love.playing == false",
+          "group": "navigation@97"
+        },
+        {
+          "command": "akazas-love.stopSong",
+          "when": "akazas-love.playing == true",
+          "group": "navigation@97"
+        },
+        {
+          "command": "akazas-love.toggleMusicTypingOn",
+          "when": "config.akazas-love.musicTyping == true",
+          "group": "navigation@98"
+        },
+        {
+          "command": "akazas-love.toggleMusicTypingOff",
+          "when": "config.akazas-love.musicTyping == false",
+          "group": "navigation@98"
+        },
+        {
+          "command": "akazas-love.toggleSnowDrivenOn",
+          "when": "config.akazas-love.typingDriven == true",
+          "group": "navigation@99"
+        },
+        {
+          "command": "akazas-love.toggleSnowDrivenOff",
+          "when": "config.akazas-love.typingDriven == false",
+          "group": "navigation@99"
+        },
+        {
+          "command": "akazas-love.toggleSnowInEditorOn",
+          "when": "config.akazas-love.snowInEditor == true",
+          "group": "navigation@100"
+        },
+        {
+          "command": "akazas-love.toggleSnowInEditorOff",
+          "when": "config.akazas-love.snowInEditor == false",
+          "group": "navigation@100"
+        },
         {
           "command": "akazas-love.openSettings",
           "when": "view == akazas-love.webview",
-          "group": "navigation@100"
+          "group": "navigation@101"
         }
       ]
     },

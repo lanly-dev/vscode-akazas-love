@@ -26,20 +26,17 @@ async function activate(context) {
   const d1a = rc('akazas-love.playSong', () => MusicTyping.playMidiFile(true))
   const d1b = rc('akazas-love.stopSong', () => MusicTyping.playMidiFile(false))
 
-  const d2 = rc('akazas-love.toggleMusicTyping', () => {
-    const mt = vscode.workspace.getConfiguration('akazas-love').get('musicTyping')
-    vscode.workspace.getConfiguration('akazas-love').update('musicTyping', !mt)
-  })
+  const d2 = rc('akazas-love.toggleMusicTyping', toggleMusicTyping)
+  const d2a = rc('akazas-love.toggleMusicTypingOn', toggleMusicTyping)
+  const d2b = rc('akazas-love.toggleMusicTypingOff', toggleMusicTyping)
 
-  const d3 = rc('akazas-love.toggleSnowInEditor', () => {
-    const sie = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
-    vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !sie)
-  })
+  const d3 = rc('akazas-love.toggleSnowInEditor', toggleShowInEditor)
+  const d3a = rc('akazas-love.toggleSnowInEditorOn', toggleShowInEditor)
+  const d3b = rc('akazas-love.toggleSnowInEditorOff', toggleShowInEditor)
 
-  const d4 = rc('akazas-love.toggleSnowDriven', () => {
-    const td = vscode.workspace.getConfiguration('akazas-love').get('typingDriven')
-    vscode.workspace.getConfiguration('akazas-love').update('typingDriven', !td)
-  })
+  const d4 = rc('akazas-love.toggleSnowDriven', toggleTypingDriven)
+  const d4a = rc('akazas-love.toggleSnowDrivenOn', toggleTypingDriven)
+  const d4b = rc('akazas-love.toggleSnowDrivenOff', toggleTypingDriven)
 
   const d5 = rc('akazas-love.showPanel', () => {
     vscode.commands.executeCommand('akazas-love.webview.focus')
@@ -48,7 +45,23 @@ async function activate(context) {
   const d6 = rc('akazas-love.openSettings', () => {
     vscode.commands.executeCommand('workbench.action.openSettings', '@ext:lanly-dev.akazas-love')
   })
-  context.subscriptions.push(d0, d1a, d1b, d2, d3, d4, d5, d6)
+
+  context.subscriptions.push(d0, d1a, d1b, d2, d2a, d2b, d3, d3a, d3b, d4, d4a, d4b, d5, d6)
+}
+
+function toggleMusicTyping() {
+  const mt = vscode.workspace.getConfiguration('akazas-love').get('musicTyping')
+  vscode.workspace.getConfiguration('akazas-love').update('musicTyping', !mt)
+}
+
+function toggleTypingDriven() {
+  const td = vscode.workspace.getConfiguration('akazas-love').get('typingDriven')
+  vscode.workspace.getConfiguration('akazas-love').update('typingDriven', !td)
+}
+
+function toggleShowInEditor() {
+  const sie = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
+  vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !sie)
 }
 
 // This method is called when your extension is deactivated

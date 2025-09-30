@@ -25,9 +25,13 @@ class WebviewProvider {
     // Listen for config changes and typing events from extension
     this.#webview = webviewView.webview
 
+    const d = webviewView.onDidChangeVisibility(() => {
+      // Inject initial params again, since it got reset when hidden
+      if (webviewView.visible) this.#postMessage(this.#getConfigs())
+    })
 
-    // Inject initial params
-    setTimeout(() => this.#postMessage(this.#getConfigs()), 100)
+    this.#postMessage(this.#getConfigs())
+    this.#context.subscriptions.push(d)
   }
 
   keyPress() {

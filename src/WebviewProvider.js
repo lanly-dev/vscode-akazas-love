@@ -71,7 +71,7 @@ class WebviewProvider {
 
   #getHtmlFromFile(imgSrc) {
     const fs = require('fs')
-    const htmlPath = path.join(this.#context.extensionPath, 'webview', 'index.html')
+    const htmlPath = path.join(this.#context.extensionPath, 'src', 'webview', 'index.html')
     let html = fs.readFileSync(htmlPath, 'utf8')
     html = html.replace('{{IMG_SRC}}', imgSrc)
     return html

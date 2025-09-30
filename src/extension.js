@@ -22,6 +22,7 @@ async function activate(context) {
   }
   const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
 
+  const rc = vscode.commands.registerCommand
   const d1a = rc('akazas-love.playSong', () => MusicTyping.playMidiFile(true))
   const d1b = rc('akazas-love.stopSong', () => MusicTyping.playMidiFile(false))
 

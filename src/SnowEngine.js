@@ -1,6 +1,6 @@
 const {
   workspace: { getConfiguration, onDidChangeConfiguration, onDidChangeTextDocument },
-  window: { onDidChangeActiveColorTheme }
+  window: { onDidChangeActiveColorTheme, setStatusBarMessage }
 } = require('vscode')
 const SnowDecoration = require('./SnowDecoration')
 
@@ -22,6 +22,8 @@ class SnowEngine {
       const sie = getConfiguration('akazas-love').get('snowInEditor')
       this.#snowDecoration.loadConfigs()
       sie ? this.#snowDecoration.start() : this.#snowDecoration.stop()
+      const message = sie ? '❄️ Snow in editor enabled' : '⛔ Snow in editor disabled'
+      setStatusBarMessage(message, 3000)
     })
 
     const d2a = onDidChangeConfiguration(e => {

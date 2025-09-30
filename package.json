@@ -51,6 +51,18 @@
         "category": "Akaza's Love"
       },
       {
+        "command": "akazas-love.toggleMusicTypingOn",
+        "title": "🎹🎵🎶💭🥲",
+        "icon": "$(music)",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleMusicTypingOff",
+        "title": "⛔🔇🫥🫤🫥",
+        "icon": "$(mute)",
+        "category": "Akaza's Love"
+      },
+      {
         "command": "akazas-love.toggleSnowInEditor",
         "title": "Toggle Snowfall in Editor",
         "category": "Akaza's Love"
@@ -87,6 +99,14 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "akazas-love.toggleMusicTypingOn",
+          "when": "false"
+        },
+        {
+          "command": "akazas-love.toggleMusicTypingOff",
+          "when": "false"
+        },
+        {
           "command": "akazas-love.toggleSnowInEditorOn",
           "when": "false"
         },
@@ -96,6 +116,16 @@
         }
       ],
       "view/title": [
+        {
+          "command": "akazas-love.toggleMusicTypingOn",
+          "when": "config.akazas-love.musicTyping == true",
+          "group": "navigation@99"
+        },
+        {
+          "command": "akazas-love.toggleMusicTypingOff",
+          "when": "config.akazas-love.musicTyping == false",
+          "group": "navigation@99"
+        },
         {
           "command": "akazas-love.toggleSnowInEditorOn",
           "when": "config.akazas-love.snowInEditor == true",

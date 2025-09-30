@@ -2,9 +2,9 @@ const fs = require('fs')
 const pkg = require('@tonejs/midi')
 const { Midi } = pkg
 
-const SAMPLE_RATE = 44100
-
 class MusicSynth {
+
+  static #SAMPLE_RATE = 44100
 
   static generateNote(frequency, duration, startTime, options = {}) {
 
@@ -24,13 +24,13 @@ class MusicSynth {
     // --- Simplified envelope to match browser linear ramp ---
     const attack = 0.005  // Very quick attack
 
-    const samples = Math.floor(SAMPLE_RATE * playDuration)
-    const startSample = Math.floor(SAMPLE_RATE * startTime)
+    const samples = Math.floor(this.#SAMPLE_RATE * playDuration)
+    const startSample = Math.floor(this.#SAMPLE_RATE * startTime)
     const result = { samples, startSample, frequency: freqDetuned, duration: playDuration, options }
     // Output Float32Array PCM (mono, -1.0 to 1.0)
     result.floatBuffer = new Float32Array(samples)
     for (let i = 0; i < samples; i++) {
-      const t = i / SAMPLE_RATE
+      const t = i / this.#SAMPLE_RATE
       let envelope = 0
       if (t <= attack) envelope = t / attack
       else {
@@ -51,14 +51,15 @@ class MusicSynth {
 
     let allNotes = []
 
+    // eslint-disable-next-line no-unused-vars
     midi.tracks.forEach((track, trackIndex) => {
-      console.log(`Track ${trackIndex}: ${track.name || 'Untitled'} - ${track.notes.length} notes`)
+      // console.log(`Track ${trackIndex}: ${track.name || 'Untitled'} - ${track.notes.length} notes`)
 
       track.notes.forEach(note => {
         const frequency = 440 * Math.pow(2, (note.midi - 69) / 12)
 
-        // Debug: Check actual durations from @tonejs/midi
-        if (note.duration < 0.1) console.warn(`Short note found: ${note.name} duration: ${note.duration.toFixed(3)}s`)
+        // // Debug: Check actual durations from @tonejs/midi
+        // if (note.duration < 0.1) console.warn(`Short note found: ${note.name} duration: ${note.duration.toFixed(3)}s`)
 
         allNotes.push({
           frequency,
@@ -78,9 +79,9 @@ class MusicSynth {
 
     // Calculate total duration
     const totalDuration = Math.max(midi.duration, Math.max(...allNotes.map(n => n.startTime + n.duration))) + 1
-    const totalSamples = Math.floor(SAMPLE_RATE * totalDuration)
+    const totalSamples = Math.floor(this.#SAMPLE_RATE * totalDuration)
 
-    console.log(`Total duration: ${totalDuration.toFixed(2)} seconds`)
+    // console.log(`Total duration: ${totalDuration.toFixed(2)} seconds`)
 
     // Group notes by time frame for chord volume scaling (like browser)
     const timeFrames = new Map()
@@ -101,8 +102,9 @@ class MusicSynth {
     const finalMix = new Float32Array(totalSamples)
 
     // Generate and mix all notes
+    // eslint-disable-next-line no-unused-vars
     allNotes.forEach((note, index) => {
-      if (index % 50 === 0) console.log(`Processing note ${index + 1}/${allNotes.length}`)
+      // if (index % 50 === 0) console.log(`Processing note ${index + 1}/${allNotes.length}`)
       const noteResult = this.generateNote(
         note.frequency,
         note.duration,
@@ -114,7 +116,7 @@ class MusicSynth {
           chordScale: note.chordScale
         }
       )
-      const startSample = Math.floor(note.startTime * SAMPLE_RATE)
+      const startSample = Math.floor(note.startTime * this.#SAMPLE_RATE)
       for (let i = 0; i < noteResult.samples && startSample + i < totalSamples; i++) {
         finalMix[startSample + i] += noteResult.floatBuffer[i]
         // Clamp to -1.0..1.0

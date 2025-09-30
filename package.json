@@ -41,6 +41,11 @@
         "category": "Akaza's Love"
       },
       {
+        "command": "akazas-love.stopSong",
+        "title": "Stop Akaza's Love Theme",
+        "category": "Akaza's Love"
+      },
+      {
         "command": "akazas-love.toggleMusicTyping",
         "title": "Toggle Music Typing",
         "category": "Akaza's Love"
@@ -54,8 +59,23 @@
         "command": "akazas-love.toggleSnowDriven",
         "title": "Toggle Typing-Driven Snowfall",
         "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.openSettings",
+        "title": "Open Akaza's Love Settings",
+        "category": "Akaza's Love",
+        "icon": "$(gear)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "akazas-love.openSettings",
+          "when": "view == akazas-love.webview",
+          "group": "navigation@100"
+        }
+      ]
+    },
     "configuration": {
       "title": "Akaza's Love",
       "properties": {

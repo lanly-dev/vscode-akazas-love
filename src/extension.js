@@ -1,7 +1,5 @@
-const path = require('path')
 const vscode = require('vscode')
 
-const MusicSynth = require('./MusicSynth')
 const MusicTyping = require('./MusicTyping')
 const SnowEngine = require('./SnowEngine')
 const Speaker = require('./Speaker')
@@ -18,14 +16,14 @@ async function activate(context) {
     vscode.window.setStatusBarMessage('⚠️ play-buffer setup failed', 3000)
   })
 
-  new MusicTyping(context)
-
+  MusicTyping.init(context)
   const webviewProvider = new WebviewProvider(context)
-  const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
   SnowEngine.init(context, webviewProvider)
+  const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
 
   const rc = vscode.commands.registerCommand
-  const d1 = rc('akazas-love.playSong', () => MusicTyping.playMidiFile())
+  const d1a = rc('akazas-love.playSong', () => MusicTyping.playMidiFile(true))
+  const d1b = rc('akazas-love.stopSong', () => MusicTyping.playMidiFile(false))
 
   const d2 = rc('akazas-love.toggleMusicTyping', () => {
     const mt = vscode.workspace.getConfiguration('akazas-love').get('musicTyping')
@@ -40,7 +38,10 @@ async function activate(context) {
     vscode.workspace.getConfiguration('akazas-love').update('typingDriven', !td)
   })
 
-  context.subscriptions.push(d0, d1, d2, d3, d4)
+  const d5 = rc('akazas-love.openSettings', () => {
+    vscode.commands.executeCommand('workbench.action.openSettings', '@ext:lanly-dev.akazas-love')
+  })
+  context.subscriptions.push(d0, d1a, d1b, d2, d3, d4, d5)
 }
 
 // This method is called when your extension is deactivated

@@ -13,7 +13,10 @@ class Speaker {
   static #binaryReady = false
   static #binaryDownloading = false
 
-  // Round-robin pool of up to 10 persistent play-buffer processes
+  // Store the last playProcess for stopping
+  static #currentPlayProcess = null
+
+  // Round-robin pool of up to 100 persistent play-buffer stream processes
   static #streamPool = []
   static #streamPoolIdx = 0
   static #MAX_STREAMS = 100
@@ -25,7 +28,6 @@ class Speaker {
     }
     try {
       if (!Speaker.#binaryReady) await Speaker.#downloadPlayBuffer(context)
-      Speaker.startSingleProcess()
       Speaker.startPersistentProcesses()
     } catch (e) {
       console.error('Failed to setup Speaker:', e)
@@ -89,12 +91,25 @@ class Speaker {
     if (isBufferTooShort) console.warn('PCM buffer is very short (less than 0.1s)')
 
     try {
+      // Kill any previous playProcess
+      if (Speaker.#currentPlayProcess && !Speaker.#currentPlayProcess.killed) {
+        try {
+          Speaker.#currentPlayProcess.stdin.end()
+          Speaker.#currentPlayProcess.kill()
+        } catch (e) {
+          console.error('Failed to kill previous playProcess:', e)
+        }
+      }
       const playProcess = spawn(Speaker.#binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore'] })
+      Speaker.#currentPlayProcess = playProcess
       playProcess.stdin.write(buffer)
       playProcess.stdin.end()
       playProcess.on('error', (err) => {
         vscode.window.showWarningMessage('Failed to play buffer: ' + err.message)
         console.error('Speaker.sendToSpeaker spawn error:', err)
+      })
+      playProcess.on('exit', () => {
+        Speaker.#currentPlayProcess = null
       })
     } catch (err2) {
       vscode.window.showWarningMessage('Failed to play buffer: ' + err2.message)
@@ -102,33 +117,18 @@ class Speaker {
     }
   }
 
-  // SINGLE PROCESS METHOD (not used currently) IS SLOW
-  // static sendToStreamsSpeaker(buffer) {
-  //   if (!Speaker.#binaryPath || !fs.existsSync(Speaker.#binaryPath)) {
-  //     vscode.window.showWarningMessage('play-buffer binary not found or not downloaded')
-  //     return
-  //   }
-  //   if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
-  //     console.warn('Speaker.sendToSpeaker: Invalid buffer', buffer)
-  //     return
-  //   }
-  //   // Ensure persistent process is running
-  //   Speaker.startPersistentProcess()
-  //   if (!Speaker.#persistentProcess || Speaker.#persistentProcess.killed) {
-  //     vscode.window.showWarningMessage('Persistent play-buffer process is not running')
-  //     return
-  //   }
-  //   try {
-  //     console.log(Speaker.#CHUNK_SIZE)
-  //     for (let i = 0; i < buffer.length; i += Speaker.#CHUNK_SIZE) {
-  //       const chunk = buffer.slice(i, i + Speaker.#CHUNK_SIZE)
-  //       Speaker.#persistentProcess.stdin.write(chunk)
-  //     }
-  //   } catch (e) {
-  //     console.error('Speaker.sendToStreamSpeaker error:', e)
-  //   }
-  // }
-
+  // Stop the last playProcess started by sendToSpeaker
+  static stopToSpeaker() {
+    if (Speaker.#currentPlayProcess && !Speaker.#currentPlayProcess.killed) {
+      try {
+        Speaker.#currentPlayProcess.stdin.end()
+        Speaker.#currentPlayProcess.kill()
+      } catch (e) {
+        console.error('Failed to stop playProcess:', e)
+      }
+      Speaker.#currentPlayProcess = null
+    } else vscode.window.showInformationMessage('No active play process to stop')
+  }
 
   static async redownloadPlayBuffer(context) {
     await Speaker.#downloadPlayBuffer(context, true)

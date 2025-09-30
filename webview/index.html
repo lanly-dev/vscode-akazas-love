@@ -72,7 +72,7 @@
     (function () {
       const debugDiv = document.getElementById('debug-console')
       if (!debugDiv) return
-      // debugDiv.style.display = 'none' // Start hidden, comment out to show
+      debugDiv.style.display = 'none' // Start hidden, comment out to show
       const origLog = console.log
       const maxLines = 40
       console.log = function (...args) {
@@ -136,7 +136,7 @@
     }
 
     function ensureFlakes() {
-      console.log('Ensuring flakes, current count:', flakes.length, 'target density:', density)
+      // console.log('Ensuring flakes, current count:', flakes.length, 'target density:', density)
       while (flakes.length < density) flakes.push(spawnFlake())
       if (flakes.length > density) flakes.splice(density)
     }
@@ -148,8 +148,9 @@
       // Calculate boost factor based on typing rate
       let boost = 1
       if (typingDriven) {
-        boost = 0.5 + Math.log1p(1 + typingRate) // You can tune this formula for desired effect
+        boost = 1 + Math.log1p(1 + typingRate) // You can tune this formula for desired effect
         // Decay typingRate toward 0 if not updated by keypress
+        // slow down the boost over time - smaller === faster decay
         typingRate *= 0.5
         if (typingRate < 0.01) typingRate = 0
       }
@@ -177,10 +178,8 @@
         if (f.x < -20) f.x = W + 20
         else if (f.x > W + 20) f.x = -20
 
-        // Use configured color
-        console.log('snowColor:', snowColor)
-        const colorA = snowColor.endsWith(',') ? `${snowColor}${0.9 * f.a})` : snowColor
-        const colorB = snowColor.endsWith(',') ? `${snowColor}0)` : snowColor
+        const colorA = `${snowColor}${0.9 * f.a})`
+        const colorB = `${snowColor}0)`
         const grd = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r)
         grd.addColorStop(0, colorA)
         grd.addColorStop(1, colorB)
@@ -219,13 +218,13 @@
       }
       if (msg.type === 'KEY' && typingDriven) {
         typingRate = msg.typingRate
-        // Spawn a flake per keypress, speed based on typing rate
-        const speed = baseSpeed + typingRate
+        // Spawn a flake per keypress, boosted based on log(1 + typingRate)
+        const speed = baseSpeed + Math.log1p(1 + typingRate)
         flakes.push(spawnFlake({ speed, y: -10 }))
         if (flakes.length > density) flakes.splice(0, flakes.length - density)
         return
       }
-      console.error('Unknown message type:', msg.type, msg)
+      console.error('Should not get here, Unknown message type:', msg.type, msg)
     })
   </script>
 </body>

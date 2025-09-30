@@ -52,13 +52,13 @@
       },
       {
         "command": "akazas-love.toggleMusicTypingOn",
-        "title": "🎹🎵🎶💭🥲",
-        "icon": "$(music)",
+        "title": "🎹🎵😊",
+        "icon": "$(piano)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.toggleMusicTypingOff",
-        "title": "⛔🔇🫥🫤🫥",
+        "title": "⛔🔇🫥",
         "icon": "$(mute)",
         "category": "Akaza's Love"
       },
@@ -85,6 +85,18 @@
         "category": "Akaza's Love"
       },
       {
+        "command": "akazas-love.toggleSnowDrivenOn",
+        "title": "⌨️ type to make it snow",
+        "icon": "$(keyboard)",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleSnowDrivenOff",
+        "title": "🌨️🌨️🌨️🌨️🌨️",
+        "icon": "$(cloud)",
+        "category": "Akaza's Love"
+      },
+      {
         "command": "akazas-love.showPanel",
         "title": "Show Akaza's Love Panel",
         "category": "Akaza's Love"
@@ -107,6 +119,14 @@
           "when": "false"
         },
         {
+          "command": "akazas-love.toggleSnowDrivenOn",
+          "when": "false"
+        },
+        {
+          "command": "akazas-love.toggleSnowDrivenOff",
+          "when": "false"
+        },
+        {
           "command": "akazas-love.toggleSnowInEditorOn",
           "when": "false"
         },
@@ -119,11 +139,21 @@
         {
           "command": "akazas-love.toggleMusicTypingOn",
           "when": "config.akazas-love.musicTyping == true",
-          "group": "navigation@99"
+          "group": "navigation@98"
         },
         {
           "command": "akazas-love.toggleMusicTypingOff",
           "when": "config.akazas-love.musicTyping == false",
+          "group": "navigation@98"
+        },
+        {
+          "command": "akazas-love.toggleSnowDrivenOn",
+          "when": "config.akazas-love.typingDriven == true",
+          "group": "navigation@99"
+        },
+        {
+          "command": "akazas-love.toggleSnowDrivenOff",
+          "when": "config.akazas-love.typingDriven == false",
           "group": "navigation@99"
         },
         {

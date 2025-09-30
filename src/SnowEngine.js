@@ -56,6 +56,8 @@ class SnowEngine {
         this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
         this.#snowDecoration.loadConfigs()
         this.#webviewProvider.reloadConfigs()
+        const message = this.#typingDriven ? '❄️ typing-driven snowfall enabled' : '⛔ typing-driven snowfall disabled'
+        setStatusBarMessage(message, 3000)
       } catch (error) {
         console.error('Error updating typingDriven config:', error)
       }

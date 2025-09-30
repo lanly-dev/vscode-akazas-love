@@ -31,10 +31,9 @@ async function activate(context) {
     vscode.workspace.getConfiguration('akazas-love').update('musicTyping', !mt)
   })
 
-  const d3 = rc('akazas-love.toggleSnowInEditor', () => {
-    const sie = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
-    vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !sie)
-  })
+  const d3 = rc('akazas-love.toggleSnowInEditor', toggleShowInEditor)
+  const d3a = rc('akazas-love.toggleSnowInEditorOn', toggleShowInEditor)
+  const d3b = rc('akazas-love.toggleSnowInEditorOff', toggleShowInEditor)
 
   const d4 = rc('akazas-love.toggleSnowDriven', () => {
     const td = vscode.workspace.getConfiguration('akazas-love').get('typingDriven')
@@ -48,7 +47,12 @@ async function activate(context) {
   const d6 = rc('akazas-love.openSettings', () => {
     vscode.commands.executeCommand('workbench.action.openSettings', '@ext:lanly-dev.akazas-love')
   })
-  context.subscriptions.push(d0, d1a, d1b, d2, d3, d4, d5, d6)
+  context.subscriptions.push(d0, d1a, d1b, d2, d3, d3a, d3b, d4, d5, d6)
+}
+
+function toggleShowInEditor() {
+  const sie = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
+  vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !sie)
 }
 
 // This method is called when your extension is deactivated

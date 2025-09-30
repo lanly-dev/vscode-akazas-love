@@ -56,6 +56,18 @@
         "category": "Akaza's Love"
       },
       {
+        "command": "akazas-love.toggleSnowInEditorOn",
+        "title": "❄️ Snowing in Editor",
+        "icon": "$(cloud-download)",
+        "category": "Akaza's Love"
+      },
+      {
+        "command": "akazas-love.toggleSnowInEditorOff",
+        "title": "⛔ No Snow in Editor",
+        "icon": "$(cloud-upload)",
+        "category": "Akaza's Love"
+      },
+      {
         "command": "akazas-love.toggleSnowDriven",
         "title": "Toggle Typing-Driven Snowfall",
         "category": "Akaza's Love"
@@ -73,11 +85,31 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "akazas-love.toggleSnowInEditorOn",
+          "when": "false"
+        },
+        {
+          "command": "akazas-love.toggleSnowInEditorOff",
+          "when": "false"
+        }
+      ],
       "view/title": [
+        {
+          "command": "akazas-love.toggleSnowInEditorOn",
+          "when": "config.akazas-love.snowInEditor == true",
+          "group": "navigation@100"
+        },
+        {
+          "command": "akazas-love.toggleSnowInEditorOff",
+          "when": "config.akazas-love.snowInEditor == false",
+          "group": "navigation@100"
+        },
         {
           "command": "akazas-love.openSettings",
           "when": "view == akazas-love.webview",
-          "group": "navigation@100"
+          "group": "navigation@101"
         }
       ]
     },

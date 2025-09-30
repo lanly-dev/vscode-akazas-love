@@ -38,7 +38,10 @@ async function activate(context) {
     vscode.workspace.getConfiguration('akazas-love').update('typingDriven', !td)
   })
 
-  context.subscriptions.push(d0, d1a, d1b, d2, d3, d4)
+  const d5 = rc('akazas-love.openSettings', () => {
+    vscode.commands.executeCommand('workbench.action.openSettings', '@ext:lanly-dev.akazas-love')
+  })
+  context.subscriptions.push(d0, d1a, d1b, d2, d3, d4, d5)
 }
 
 // This method is called when your extension is deactivated

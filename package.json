@@ -309,6 +309,7 @@
   "devDependencies": {
     "@types/node": "22.x",
     "@types/vscode": "^1.104.0",
+    "esbuild": "^0.25.10",
     "eslint": "^9.34.0"
   }
 }

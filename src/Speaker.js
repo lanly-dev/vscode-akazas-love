@@ -67,6 +67,8 @@ class Speaker {
       }
       Speaker.#streamPool = []
       Speaker.#streamPoolIdx = 0
+
+      Speaker.#killCurrentProcess()
     } catch (e) {
       console.error('Failed to stop play-buffer processes:', e)
     }
@@ -92,14 +94,10 @@ class Speaker {
 
     try {
       // Kill any previous playProcess
-      if (Speaker.#currentPlayProcess && !Speaker.#currentPlayProcess.killed) {
-        try {
-          Speaker.#currentPlayProcess.stdin.end()
-          Speaker.#currentPlayProcess.kill()
-        } catch (e) {
-          console.error('Failed to kill previous playProcess:', e)
-        }
-      }
+      Speaker.#killCurrentProcess()
+      // The method sendToSpeaker should be generic but well only one task calls it so it is fine
+      vscode.commands.executeCommand('setContext', 'akazas-love.playing', true)
+
       const playProcess = spawn(Speaker.#binaryPath, [], { stdio: ['pipe', 'ignore', 'ignore'] })
       Speaker.#currentPlayProcess = playProcess
       playProcess.stdin.write(buffer)
@@ -110,6 +108,7 @@ class Speaker {
       })
       playProcess.on('exit', () => {
         Speaker.#currentPlayProcess = null
+        vscode.commands.executeCommand('setContext', 'akazas-love.playing', false)
       })
     } catch (err2) {
       vscode.window.showWarningMessage('Failed to play buffer: ' + err2.message)
@@ -119,15 +118,8 @@ class Speaker {
 
   // Stop the last playProcess started by sendToSpeaker
   static stopToSpeaker() {
-    if (Speaker.#currentPlayProcess && !Speaker.#currentPlayProcess.killed) {
-      try {
-        Speaker.#currentPlayProcess.stdin.end()
-        Speaker.#currentPlayProcess.kill()
-      } catch (e) {
-        console.error('Failed to stop playProcess:', e)
-      }
-      Speaker.#currentPlayProcess = null
-    } else vscode.window.showInformationMessage('No active play process to stop')
+    if (Speaker.#currentPlayProcess && !Speaker.#currentPlayProcess.killed) Speaker.#killCurrentProcess()
+    else vscode.window.showInformationMessage('No active play process to stop')
   }
 
   static async redownloadPlayBuffer(context) {
@@ -235,6 +227,15 @@ class Speaker {
     })
   }
 
+  static #killCurrentProcess() {
+    if (!Speaker.#currentPlayProcess || Speaker.#currentPlayProcess.killed) return
+    try {
+      Speaker.#currentPlayProcess.stdin.end()
+      Speaker.#currentPlayProcess.kill()
+    } catch (e) {
+      console.error('Failed to kill current playProcess:', e)
+    }
+  }
 
   static get #assetName() {
     const platform = process.platform

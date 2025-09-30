@@ -37,17 +37,19 @@
     "commands": [
       {
         "command": "akazas-love.playSong",
-        "title": "Play Akaza's Love Theme",
+        "title": "▶️ Play Akaza's Love Theme",
+        "icon": "$(play)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.stopSong",
-        "title": "Stop Akaza's Love Theme",
+        "title": "⏹️ Stop Akaza's Love Theme",
+        "icon": "$(stop)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.toggleMusicTyping",
-        "title": "Toggle Music Typing",
+        "title": "🎹 Toggle Music Typing",
         "category": "Akaza's Love"
       },
       {
@@ -64,7 +66,7 @@
       },
       {
         "command": "akazas-love.toggleSnowInEditor",
-        "title": "Toggle Snowfall in Editor",
+        "title": "❄️ Toggle Snowfall in Editor",
         "category": "Akaza's Love"
       },
       {
@@ -81,7 +83,7 @@
       },
       {
         "command": "akazas-love.toggleSnowDriven",
-        "title": "Toggle Typing-Driven Snowfall",
+        "title": "⌨️ Toggle Typing-Driven Snowfall",
         "category": "Akaza's Love"
       },
       {
@@ -98,12 +100,12 @@
       },
       {
         "command": "akazas-love.showPanel",
-        "title": "Show Akaza's Love Panel",
+        "title": "🥹 Show Akaza's Love Panel",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.openSettings",
-        "title": "Open Akaza's Love Settings",
+        "title": "⚙️ Open Akaza's Love Settings",
         "icon": "$(gear)",
         "category": "Akaza's Love"
       }
@@ -136,6 +138,16 @@
         }
       ],
       "view/title": [
+        {
+          "command": "akazas-love.playSong",
+          "when": "akazas-love.playing == false",
+          "group": "navigation@97"
+        },
+        {
+          "command": "akazas-love.stopSong",
+          "when": "akazas-love.playing == true",
+          "group": "navigation@97"
+        },
         {
           "command": "akazas-love.toggleMusicTypingOn",
           "when": "config.akazas-love.musicTyping == true",

@@ -30,7 +30,7 @@ class MusicalTyping {
 
     this.stopBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
     this.stopBtn.command = 'akazas-love.stopSong'
-    this.stopBtn.text = '⏸️ Stop'
+    this.stopBtn.text = '⏹️ Stop'
     this.#context.subscriptions.push(this.stopBtn)
   }
 

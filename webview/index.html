@@ -214,6 +214,7 @@
         typingDriven = msg.typingDriven
         density = msg.density
         snowColor = msg.color
+        document.body.style.background = msg.backgroundColor
         return
       }
       if (msg.type === 'KEY' && typingDriven) {

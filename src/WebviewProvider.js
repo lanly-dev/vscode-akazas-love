@@ -42,13 +42,26 @@ class WebviewProvider {
 
   #getConfigs() {
     const cfg1 = vscode.workspace.getConfiguration('akazas-love')
-    const cfg2 = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
+    const cfg2 = vscode.workspace.getConfiguration('akazas-love.snowPanelConfigs')
 
+    const colorLight = cfg2.get('colorLight')
+    const colorDark = cfg2.get('colorDark')
+    const themeKind = vscode.window.activeColorTheme.kind
+
+    let color
+    if (colorLight) {
+      if (themeKind === vscode.ColorThemeKind.Light) color = colorLight
+      else color = colorDark
+    } else {
+      if (themeKind === vscode.ColorThemeKind.Light) color = cfg2.inspect('colorLight').defaultValue
+      else color = cfg2.inspect('colorDark').defaultValue
+    }
     return {
       type: 'CONFIG',
       typingDriven: cfg1.get('typingDriven'),
       density: cfg2.get('density'),
-      color: this.#hexToRgba('#bcdfff')
+      color: this.#hexToRgba(color),
+      backgroundColor: cfg2.get('backgroundColor')
     }
   }
 
@@ -62,6 +75,7 @@ class WebviewProvider {
 
   // Convert hex color to rgba string
   #hexToRgba(hex) {
+    if (!hex) return
     let c = hex.replace('#', '')
     if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2]
     if (c.length !== 6) console.error(`invalid hex color: ${hex}, proceeding with 6 characters`)

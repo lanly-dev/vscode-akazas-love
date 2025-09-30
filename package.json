@@ -1,7 +1,7 @@
 {
   "name": "akazas-love",
-  "displayName": "Akaza's Love - Musical Typing",
-  "description": "Transform your typing into beautiful music with musical note sounds for each keystroke",
+  "displayName": "Akaza's Love - Musical Typing 🎶 and Falling Snow ❄️",
+  "description": "Transform your typing into beautiful music and animated snowfall",
   "publisher": "lanly-dev",
   "version": "0.0.1",
   "engines": {
@@ -19,7 +19,7 @@
       "activitybar": [
         {
           "id": "akazas-love-webview",
-          "title": "Welcome Home Hakuji 🎆",
+          "title": "Welcome Home",
           "icon": "media/akaza.svg"
         }
       ]
@@ -29,7 +29,7 @@
         {
           "type": "webview",
           "id": "akazas-love.webview",
-          "name": "Welcome Home Hakuji 🎆",
+          "name": "Hakuji 🎆",
           "icon": "media/akaza.svg"
         }
       ]
@@ -61,10 +61,15 @@
         "category": "Akaza's Love"
       },
       {
+        "command": "akazas-love.showPanel",
+        "title": "Show Akaza's Love Panel",
+        "category": "Akaza's Love"
+      },
+      {
         "command": "akazas-love.openSettings",
         "title": "Open Akaza's Love Settings",
-        "category": "Akaza's Love",
-        "icon": "$(gear)"
+        "icon": "$(gear)",
+        "category": "Akaza's Love"
       }
     ],
     "menus": {
@@ -89,20 +94,26 @@
           "default": true,
           "description": "Enable snowfall overlay in editors"
         },
-        "akazas-love.snowConfigs": {
+        "akazas-love.snowEditorConfigs": {
           "type": "object",
           "default": {
-            "color": "#ffffffcc",
+            "colorLight": "#ffffffcc",
+            "colorDark": "#aaaaffcc",
             "density": 50,
             "maxColumns": 160,
             "size": 10,
             "speed": 5
           },
           "properties": {
-            "color": {
+            "colorLight": {
               "type": "string",
               "default": "#ffffffcc",
-              "description": "Snowflake color (hex or rgba)"
+              "description": "Light theme snowflake color"
+            },
+            "colorDark": {
+              "type": "string",
+              "default": "#aaaaffcc",
+              "description": "Dark theme snowflake color"
             },
             "density": {
               "type": "number",
@@ -133,7 +144,41 @@
               "description": "Snowfall speed in lines per second"
             }
           },
-          "description": "Snowfall overlay configuration (all snow-related properties)"
+          "description": "Snowfall overlay configuration for editors"
+        },
+        "akazas-love.snowPanelConfigs": {
+          "type": "object",
+          "default": {
+            "colorLight": "#7BB3E6",
+            "colorDark": "#bcdfff",
+            "density": 50,
+            "backgroundColor": null
+          },
+          "properties": {
+            "colorLight": {
+              "type": "string",
+              "default": "#7BB3E6",
+              "description": "Light theme snowflake color, no alpha channel"
+            },
+            "colorDark": {
+              "type": "string",
+              "default": "#bcdfff",
+              "description": "Dark theme snowflake color, no alpha channel"
+            },
+            "density": {
+              "type": "number",
+              "default": 50,
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Number of snowflakes per visible webview panel"
+            },
+            "backgroundColor": {
+              "type": "string",
+              "default": null,
+              "description": "Webview background color, could be hex or name, e.g. `#ffccff` or `pink` (null = no background color"
+            }
+          },
+          "description": "Snowfall overlay configuration for the webview panel"
         },
         "akazas-love.typingDriven": {
           "type": "boolean",

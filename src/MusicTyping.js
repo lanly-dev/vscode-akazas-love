@@ -24,9 +24,13 @@ class MusicalTyping {
     this.#notes = []
     this.#currentNoteIdx = 0
 
-    this.#loadConfiguration()
-    this.#loadMidiFile()
-    this.#setupEventListeners()
+    try {
+      this.#loadConfiguration()
+      this.#loadMidiFile()
+      this.#setupEventListeners()
+    } catch (error) {
+      console.error('Error initializing MusicalTyping:', error)
+    }
 
     this.stopBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
     this.stopBtn.command = 'akazas-love.stopSong'

@@ -10,17 +10,16 @@ const WebviewProvider = require('./WebviewProvider')
  */
 async function activate(context) {
 
-  Speaker.setupSpeaker(context).then(() => {
-    vscode.window.setStatusBarMessage('🔊 play-buffer ready', 3000)
-  }).catch(() => {
-    vscode.window.setStatusBarMessage('⚠️ play-buffer setup failed', 3000)
-  })
+  Speaker.setupSpeaker(context).then(() => vscode.window.setStatusBarMessage('🔊 play-buffer ready', 3000)
+  ).catch(() => vscode.window.setStatusBarMessage('⚠️ play-buffer setup failed', 3000))
 
-  MusicTyping.init(context)
   const webviewProvider = new WebviewProvider(context)
-  SnowEngine.init(context, webviewProvider)
-  const rc = vscode.commands.registerCommand
-
+  try {
+    MusicTyping.init(context)
+    SnowEngine.init(context, webviewProvider)
+  } catch (error) {
+    console.error('Error initializing extensions:', error)
+  }
   const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
 
   const d1a = rc('akazas-love.playSong', () => MusicTyping.playMidiFile(true))

@@ -1,13 +1,12 @@
-const vscode = require('vscode')
-const fs = require('fs')
-const path = require('path')
 const { https } = require('follow-redirects')
 const { spawn } = require('child_process')
+const fs = require('fs')
+const path = require('path')
+const vscode = require('vscode')
 
 class Speaker {
 
   static #PLAY_BUFFER_MODE = '--stream-callback'
-  static #CHUNK_SIZE = 512 // bytes
 
   static #binaryPath = null
   static #binaryReady = false

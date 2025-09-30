@@ -19,9 +19,10 @@ async function activate(context) {
   MusicTyping.init(context)
   const webviewProvider = new WebviewProvider(context)
   SnowEngine.init(context, webviewProvider)
+  const rc = vscode.commands.registerCommand
+
   const d0 = vscode.window.registerWebviewViewProvider('akazas-love.webview', webviewProvider)
 
-  const rc = vscode.commands.registerCommand
   const d1a = rc('akazas-love.playSong', () => MusicTyping.playMidiFile(true))
   const d1b = rc('akazas-love.stopSong', () => MusicTyping.playMidiFile(false))
 
@@ -29,19 +30,25 @@ async function activate(context) {
     const mt = vscode.workspace.getConfiguration('akazas-love').get('musicTyping')
     vscode.workspace.getConfiguration('akazas-love').update('musicTyping', !mt)
   })
+
   const d3 = rc('akazas-love.toggleSnowInEditor', () => {
     const sie = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
     vscode.workspace.getConfiguration('akazas-love').update('snowInEditor', !sie)
   })
+
   const d4 = rc('akazas-love.toggleSnowDriven', () => {
     const td = vscode.workspace.getConfiguration('akazas-love').get('typingDriven')
     vscode.workspace.getConfiguration('akazas-love').update('typingDriven', !td)
   })
 
-  const d5 = rc('akazas-love.openSettings', () => {
+  const d5 = rc('akazas-love.showPanel', () => {
+    vscode.commands.executeCommand('akazas-love.webview.focus')
+  })
+
+  const d6 = rc('akazas-love.openSettings', () => {
     vscode.commands.executeCommand('workbench.action.openSettings', '@ext:lanly-dev.akazas-love')
   })
-  context.subscriptions.push(d0, d1a, d1b, d2, d3, d4, d5)
+  context.subscriptions.push(d0, d1a, d1b, d2, d3, d4, d5, d6)
 }
 
 // This method is called when your extension is deactivated

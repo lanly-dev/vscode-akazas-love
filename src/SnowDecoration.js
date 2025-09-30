@@ -40,7 +40,18 @@ class SnowDecoration {
     this.#enabled = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
     this.#typingDriven = vscode.workspace.getConfiguration('akazas-love').get('typingDriven')
 
-    this.#color = cfg.get('color')
+    const colorLight = cfg.get('colorLight')
+    const colorDark = cfg.get('colorDark')
+    const themeKind = vscode.window.activeColorTheme.kind
+
+    if (colorLight) {
+      if (themeKind === vscode.ColorThemeKind.Light) this.#color = colorLight
+      else this.#color = colorDark
+    } else {
+      if (themeKind === vscode.ColorThemeKind.Light) this.#color = cfg.inspect('colorLight').defaultValue
+      else this.#color = cfg.inspect('colorDark').defaultValue
+    }
+
     this.#density = cfg.get('density')
     this.#size = cfg.get('size')
     this.#speed = cfg.get('speed')

@@ -1,4 +1,7 @@
-const { workspace: { getConfiguration, onDidChangeConfiguration, onDidChangeTextDocument } } = require('vscode')
+const {
+  workspace: { getConfiguration, onDidChangeConfiguration, onDidChangeTextDocument },
+  window: { onDidChangeActiveColorTheme }
+} = require('vscode')
 const SnowDecoration = require('./SnowDecoration')
 
 class SnowEngine {
@@ -21,14 +24,28 @@ class SnowEngine {
       sie ? this.#snowDecoration.start() : this.#snowDecoration.stop()
     })
 
-    const d2 = onDidChangeConfiguration(e => {
-      if (!e.affectsConfiguration('akazas-love.snowConfigs')) return
+    const d2a = onDidChangeConfiguration(e => {
+      if (!e.affectsConfiguration('akazas-love.snowEditorConfigs')) return
       try {
         this.#snowDecoration.loadConfigs()
+      } catch (error) {
+        console.error('Error reloading snow editor configs:', error)
+      }
+    })
+
+    const d2b = onDidChangeConfiguration(e => {
+      if (!e.affectsConfiguration('akazas-love.snowPanelConfigs')) return
+      try {
         this.#webviewProvider.reloadConfigs()
       } catch (error) {
-        console.error('Error reloading snow configs:', error)
+        console.error('Error reloading snow panel configs:', error)
       }
+    })
+
+    // eslint-disable-next-line no-unused-vars
+    const d2c = onDidChangeActiveColorTheme((e) => {
+      this.#snowDecoration.loadConfigs()
+      this.#webviewProvider.reloadConfigs()
     })
 
     const d3 = onDidChangeConfiguration(e => {
@@ -51,7 +68,7 @@ class SnowEngine {
         console.error('Error in text document change handler:', error)
       }
     })
-    context.subscriptions.concat([d1, d2, d3, d4])
+    context.subscriptions.concat([d1, d2a, d2b, d3, d4])
   }
 }
 

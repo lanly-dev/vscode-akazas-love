@@ -167,7 +167,7 @@ class Speaker {
       if (fs.existsSync(Speaker.#binaryPath)) {
         Speaker.#binaryReady = true
         Speaker.#binaryDownloading = false
-        vscode.window.showInformationMessage('play-buffer binary downloaded')
+        // The binary is already downloaded
         return
       }
     }
@@ -213,7 +213,7 @@ class Speaker {
           }
           Speaker.#binaryReady = true
           Speaker.#binaryDownloading = false
-          vscode.window.showInformationMessage('play-buffer binary downloaded')
+          vscode.window.showInformationMessage('Downloaded play-buffer binary successfully! 🚀')
           resolve()
         })
         file.on('error', (err) => {

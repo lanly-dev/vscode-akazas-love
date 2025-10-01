@@ -55,7 +55,7 @@
       {
         "command": "akazas-love.toggleMusicTypingOn",
         "title": "🎹🎵😊",
-        "icon": "$(piano)",
+        "icon": "$(music)",
         "category": "Akaza's Love"
       },
       {
@@ -94,13 +94,13 @@
       },
       {
         "command": "akazas-love.toggleSnowDrivenOff",
-        "title": "🌨️🌨️🌨️🌨️🌨️",
+        "title": "🌨️ Snowing as always",
         "icon": "$(cloud)",
         "category": "Akaza's Love"
       },
       {
         "command": "akazas-love.showPanel",
-        "title": "🥹 Show Akaza's Love Panel",
+        "title": "💖 Show Akaza's Love Panel",
         "category": "Akaza's Love"
       },
       {
@@ -140,42 +140,42 @@
       "view/title": [
         {
           "command": "akazas-love.playSong",
-          "when": "akazas-love.playing == false",
+          "when": "view == akazas-love.webview && akazas-love.playing == false",
           "group": "navigation@97"
         },
         {
           "command": "akazas-love.stopSong",
-          "when": "akazas-love.playing == true",
+          "when": "view == akazas-love.webview && akazas-love.playing == true",
           "group": "navigation@97"
         },
         {
           "command": "akazas-love.toggleMusicTypingOn",
-          "when": "config.akazas-love.musicTyping == true",
+          "when": "view == akazas-love.webview && config.akazas-love.musicTyping == true",
           "group": "navigation@98"
         },
         {
           "command": "akazas-love.toggleMusicTypingOff",
-          "when": "config.akazas-love.musicTyping == false",
+          "when": "view == akazas-love.webview && config.akazas-love.musicTyping == false",
           "group": "navigation@98"
         },
         {
           "command": "akazas-love.toggleSnowDrivenOn",
-          "when": "config.akazas-love.typingDriven == true",
+          "when": "view == akazas-love.webview && config.akazas-love.typingDriven == true",
           "group": "navigation@99"
         },
         {
           "command": "akazas-love.toggleSnowDrivenOff",
-          "when": "config.akazas-love.typingDriven == false",
+          "when": "view == akazas-love.webview && config.akazas-love.typingDriven == false",
           "group": "navigation@99"
         },
         {
           "command": "akazas-love.toggleSnowInEditorOn",
-          "when": "config.akazas-love.snowInEditor == true",
+          "when": "view == akazas-love.webview && config.akazas-love.snowInEditor == true",
           "group": "navigation@100"
         },
         {
           "command": "akazas-love.toggleSnowInEditorOff",
-          "when": "config.akazas-love.snowInEditor == false",
+          "when": "view == akazas-love.webview && config.akazas-love.snowInEditor == false",
           "group": "navigation@100"
         },
         {
@@ -191,18 +191,19 @@
         "akazas-love.musicTyping": {
           "type": "boolean",
           "default": true,
-          "description": "Enable musical typing sounds"
+          "description": "🎹 Enable musical typing sounds"
         },
         "akazas-love.snowInEditor": {
           "type": "boolean",
           "default": true,
-          "description": "Enable snowfall overlay in editors"
+          "description": "❄️ Enable snowfall overlay in editors"
         },
         "akazas-love.snowEditorConfigs": {
           "type": "object",
+          "description": "⚙️ Snowfall overlay configuration for editors",
           "default": {
-            "colorLight": "#ffffffcc",
-            "colorDark": "#aaaaffcc",
+            "colorLight": "#7bb3e6",
+            "colorDark": "#ffffffcc",
             "density": 50,
             "maxColumns": 160,
             "size": 10,
@@ -211,12 +212,12 @@
           "properties": {
             "colorLight": {
               "type": "string",
-              "default": "#ffffffcc",
+              "default": "#7bb3e6",
               "description": "Light theme snowflake color"
             },
             "colorDark": {
               "type": "string",
-              "default": "#aaaaffcc",
+              "default": "#ffffffcc",
               "description": "Dark theme snowflake color"
             },
             "density": {
@@ -247,13 +248,13 @@
               "maximum": 10,
               "description": "Snowfall speed in lines per second"
             }
-          },
-          "description": "Snowfall overlay configuration for editors"
+          }
         },
         "akazas-love.snowPanelConfigs": {
           "type": "object",
+          "description": "⚙️ Snowfall overlay configuration for the webview panel",
           "default": {
-            "colorLight": "#7BB3E6",
+            "colorLight": "#7bb3e6",
             "colorDark": "#bcdfff",
             "density": 50,
             "backgroundColor": null
@@ -261,7 +262,7 @@
           "properties": {
             "colorLight": {
               "type": "string",
-              "default": "#7BB3E6",
+              "default": "#7bb3e6",
               "description": "Light theme snowflake color, no alpha channel"
             },
             "colorDark": {
@@ -281,20 +282,19 @@
               "default": null,
               "description": "Webview background color, could be hex or name, e.g. `#ffbbff` or `pink` (null = no background color)"
             }
-          },
-          "description": "Snowfall overlay configuration for the webview panel"
+          }
         },
         "akazas-love.typingDriven": {
           "type": "boolean",
           "default": false,
-          "description": "Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
+          "description": "⌨ Enable typing-driven snow: one snowflake per keypress, speed depends on typing rate (applies to both editor and webview)"
         },
         "akazas-love.volume": {
           "type": "number",
           "default": 0.1,
           "minimum": 0,
           "maximum": 1,
-          "description": "Volume level for musical notes (0.0 to 1.0)"
+          "description": "🔊 Volume level for musical notes (0.0 to 1.0)"
         }
       }
     }

@@ -319,22 +319,26 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run build",
     "build": "node ./build.js",
     "build-dev": "node ./build.js --dev",
+    "vsce-package": "vsce package",
     "efix": "eslint . --fix"
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
-    "follow-redirects": "^1.15.11"
+    "follow-redirects": "^1.15.11",
+    "ovsx": "^0.10.6"
   },
   "devDependencies": {
     "@types/node": "24.x",
     "@types/vscode": "^1.104.0",
+    "@vscode/vsce": "^3.6.2",
     "esbuild": "^0.25.10",
     "eslint": "^9.36.0",
     "minify": "^14.1.0"
   },
-    "repository": {
+  "repository": {
     "type": "git",
     "url": "git+https://github.com/lanly-dev/vscode-akazas-love.git"
   },

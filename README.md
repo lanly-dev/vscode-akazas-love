@@ -2,7 +2,7 @@
 
 Did you watch Demon Slayer: Kimetsu no Yaiba - The Movie: Infinity Castle?
 → If you did, you already know what this extension is about! 🙂<a href="https://marketplace.visualstudio.com/items?itemName=lanly-dev.akazas-love" target="_blank">
-  <img src='https://code.visualstudio.com/favicon.ico' width='12'/>
+  <img src='https://code.visualstudio.com/favicon.ico' width='13'/>
 </a>
 <a href="https://open-vsx.org/extension/lanly-dev/akazas-love" target="_blank">
   <img src='https://open-vsx.org/favicon.ico' width='12'/>

@@ -1,6 +1,3 @@
-// esbuild.extension.js
-// Bundle your VS Code extension entry point for Node.js 20+
-
 const esbuild = require('esbuild')
 const path = require('path')
 
@@ -15,3 +12,9 @@ esbuild.build({
   logLevel: 'info',
   external: ['vscode']
 }).catch(() => process.exit(1))
+
+const minify = require('minify').minify
+
+minify('src/webview/index.html')
+  .then(minified => require('fs').writeFileSync('dist/index.html', minified))
+  .catch(console.error)

@@ -300,16 +300,18 @@
     }
   },
   "scripts": {
-    "efix": "eslint . --fix"
+    "efix": "eslint . --fix",
+    "build": "node ./build.js"
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
-    "follow-redirects": "^1.15.9"
+    "follow-redirects": "^1.15.11"
   },
   "devDependencies": {
-    "@types/node": "22.x",
+    "@types/node": "24.x",
     "@types/vscode": "^1.104.0",
     "esbuild": "^0.25.10",
-    "eslint": "^9.34.0"
+    "eslint": "^9.36.0",
+    "minify": "^14.1.0"
   }
 }

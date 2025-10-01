@@ -15,6 +15,6 @@ esbuild.build({
 
 const minify = require('minify').minify
 
-minify('src/webview/index.html')
+minify('src/index.html')
   .then(minified => require('fs').writeFileSync('dist/index.html', minified))
   .catch(console.error)

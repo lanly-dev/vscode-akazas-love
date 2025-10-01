@@ -279,7 +279,7 @@
             "backgroundColor": {
               "type": "string",
               "default": null,
-              "description": "Webview background color, could be hex or name, e.g. `#ffccff` or `pink` (null = no background color"
+              "description": "Webview background color, could be hex or name, e.g. `#ff69b4` or `pink` (null = no background color"
             }
           },
           "description": "Snowfall overlay configuration for the webview panel"

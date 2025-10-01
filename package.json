@@ -1,14 +1,33 @@
 {
   "name": "akazas-love",
   "displayName": "Akaza's Love - Musical Typing 🎶 and Falling Snow ❄️",
-  "description": "Transform your typing into beautiful music and animated snowfall",
+  "description": "Transform your typing into beautiful melody and animated snowfall",
+  "version": "1.0.0",
   "publisher": "lanly-dev",
-  "version": "0.0.1",
+  "sponsor": {
+    "url": "https://github.com/sponsors/lanly-dev"
+  },
   "engines": {
     "vscode": "^1.104.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "akaza",
+    "anime",
+    "demon slayer",
+    "happy",
+    "infinity castle",
+    "kimetsu no yaiba",
+    "melody",
+    "music",
+    "musical typing",
+    "relaxing",
+    "snow effect",
+    "snowfall",
+    "snowflakes",
+    "typing sound"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -314,5 +333,13 @@
     "esbuild": "^0.25.10",
     "eslint": "^9.36.0",
     "minify": "^14.1.0"
-  }
+  },
+    "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lanly-dev/vscode-akazas-love.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lanly-dev/vscode-akazas-love/issues"
+  },
+  "license": "MIT"
 }

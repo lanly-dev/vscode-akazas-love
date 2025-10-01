@@ -13,7 +13,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./src/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -279,7 +279,7 @@
             "backgroundColor": {
               "type": "string",
               "default": null,
-              "description": "Webview background color, could be hex or name, e.g. `#ff69b4` or `pink` (null = no background color"
+              "description": "Webview background color, could be hex or name, e.g. `#ffbbff` or `pink` (null = no background color)"
             }
           },
           "description": "Snowfall overlay configuration for the webview panel"
@@ -300,8 +300,8 @@
     }
   },
   "scripts": {
-    "efix": "eslint . --fix",
-    "build": "node ./build.js"
+    "build": "node ./build.js",
+    "efix": "eslint . --fix"
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
@@ -312,6 +312,7 @@
     "@types/vscode": "^1.104.0",
     "esbuild": "^0.25.10",
     "eslint": "^9.36.0",
-    "minify": "^14.1.0"
+    "minify": "^14.1.0",
+    "nodemon": "^3.1.10"
   }
 }

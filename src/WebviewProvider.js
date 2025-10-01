@@ -72,7 +72,7 @@ class WebviewProvider {
   #getHtmlFromFile(imgSrc) {
     const fs = require('fs')
     // To get the absolute path to ./src/index.html
-    const htmlPath = path.join(this.#context.extensionPath, 'src', 'index.html')
+    const htmlPath = path.join(this.#context.extensionPath, 'dist', 'index.html')
 
     let html = fs.readFileSync(htmlPath, 'utf8')
     html = html.replace('{{IMG_SRC}}', imgSrc)

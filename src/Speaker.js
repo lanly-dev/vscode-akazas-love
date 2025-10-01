@@ -20,20 +20,20 @@ class Speaker {
   static #streamPoolIdx = 0
   static #MAX_STREAMS = 100
 
-  static async setupSpeaker(context) {
+  static async setupSpeaker(context, statusBarItem) {
     if (!this.#assetName) {
       vscode.window.showErrorMessage('Unsupported platform for play-buffer')
       return
     }
     try {
       if (!Speaker.#binaryReady) await Speaker.#downloadPlayBuffer(context)
-      Speaker.startPersistentProcesses()
+      Speaker.startPersistentProcesses(statusBarItem)
     } catch (e) {
       console.error('Failed to setup Speaker:', e)
     }
   }
 
-  static startPersistentProcesses() {
+  static startPersistentProcesses(statusBarItem) {
     try {
       if (Speaker.#streamPool.length < Speaker.#MAX_STREAMS) {
         for (let i = Speaker.#streamPool.length; i < Speaker.#MAX_STREAMS; i++) {
@@ -48,6 +48,11 @@ class Speaker {
           })
           Speaker.#streamPool.push(proc)
         }
+        // Add a delay before marking ready
+        setTimeout(() => {
+          statusBarItem.text = 'Akaza: Ready ❄️'
+          statusBarItem.tooltip = 'Akaza extension is ready!'
+        }, 2000) // 2 second delay
       }
     } catch (err2) {
       console.error('Failed to start play-buffer process:', err2)

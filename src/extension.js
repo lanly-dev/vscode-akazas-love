@@ -10,7 +10,12 @@ const WebviewProvider = require('./WebviewProvider')
  */
 async function activate(context) {
 
-  Speaker.setupSpeaker(context).then(() => vscode.window.setStatusBarMessage('🔊 play-buffer ready', 3000)
+  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100)
+  statusBarItem.text = 'Akaza: activating...'
+  statusBarItem.color = '#ffbbff'
+  statusBarItem.show()
+
+  Speaker.setupSpeaker(context, statusBarItem).then(() => vscode.window.setStatusBarMessage('🔊 play-buffer ready', 3000)
   ).catch(() => vscode.window.setStatusBarMessage('⚠️ play-buffer setup failed', 3000))
 
   const webviewProvider = new WebviewProvider(context)
@@ -46,7 +51,7 @@ async function activate(context) {
     vscode.commands.executeCommand('workbench.action.openSettings', '@ext:lanly-dev.akazas-love')
   })
 
-  context.subscriptions.push(d0, d1a, d1b, d2, d2a, d2b, d3, d3a, d3b, d4, d4a, d4b, d5, d6)
+  context.subscriptions.push(statusBarItem, d0, d1a, d1b, d2, d2a, d2b, d3, d3a, d3b, d4, d4a, d4b, d5, d6)
 }
 
 function toggleMusicTyping() {

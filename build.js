@@ -1,10 +1,12 @@
 const esbuild = require('esbuild')
 const path = require('path')
 
+const isDev = process.argv.includes('--dev')
+
 esbuild.build({
   entryPoints: [path.resolve(__dirname, 'src/extension.js')],
   bundle: true,
-  minify: true,
+  minify: !isDev,
   platform: 'node',
   target: ['node24'],
   outfile: path.resolve(__dirname, 'dist/extension.js'),

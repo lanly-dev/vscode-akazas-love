@@ -13,6 +13,7 @@ async function activate(context) {
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100)
   statusBarItem.text = 'Akaza: activating...'
   statusBarItem.color = '#ffbbff'
+  statusBarItem.command = 'akazas-love.showPanel'
   statusBarItem.show()
 
   Speaker.setupSpeaker(context, statusBarItem).then(() => vscode.window.setStatusBarMessage('🔊 play-buffer ready', 3000)

@@ -15,11 +15,9 @@ class SnowDecoration {
   #size
   #speed
 
-
   #stopping
   #timer
   #typingRate
-
 
   constructor() {
     this.loadConfigs()
@@ -36,7 +34,7 @@ class SnowDecoration {
   }
 
   loadConfigs() {
-    const cfg = vscode.workspace.getConfiguration('akazas-love.snowConfigs')
+    const cfg = vscode.workspace.getConfiguration('akazas-love.snowEditorConfigs')
     this.#enabled = vscode.workspace.getConfiguration('akazas-love').get('snowInEditor')
     this.#typingDriven = vscode.workspace.getConfiguration('akazas-love').get('typingDriven')
 

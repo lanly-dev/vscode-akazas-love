@@ -301,6 +301,7 @@
   },
   "scripts": {
     "build": "node ./build.js",
+    "build-dev": "node ./build.js --dev",
     "efix": "eslint . --fix"
   },
   "dependencies": {

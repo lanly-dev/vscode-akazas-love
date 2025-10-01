@@ -2,41 +2,6 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Watch and Build (nodemon)",
-			"type": "shell",
-			"command": "npx nodemon --watch src --exec \"npm run build\"",
-			"args": [],
-			"isBackground": true,
-			"problemMatcher": [
-				"$esbuild-watch",
-				"$eslint-compact",
-				{
-					"owner": "node",
-					"pattern": [
-						{
-							"regexp": "^\\s*at\\s+(.*)\\s+\\((.*):(\\d+):(\\d+)\\)$",
-							"file": 2,
-							"line": 3,
-							"column": 4,
-							"message": 1
-						},
-						{
-							"regexp": "^(.*):(\\d+):(\\d+): (error|warning): (.*)$",
-							"file": 1,
-							"line": 2,
-							"column": 3,
-							"severity": 4,
-							"message": 5
-						}
-					]
-				}
-			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-		},
-		{
 			"label": "Build (preLaunch)",
 			"type": "shell",
 			"command": "npm run build",

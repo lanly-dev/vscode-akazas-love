@@ -1,10 +1,10 @@
 # Change Log
 
-All notable changes to the "akazas-love" extension will be documented in this file.
+All notable changes to the "Akaza's Love" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[1.0.0] - 2025-10-02
+## [1.0.0] - 2025-10-02
 - Initial release 🚀
 - Musical typing: keystrokes play MIDI notes or scales
 - Animated snow: snowflakes fall in editor and webview
@@ -36,4 +36,11 @@ akazas-love-1.0.0.vsix
       └─ happy.png [6.98 MB]
 
 The file extension/media/happy.png is large (6.98 MB)
+```
+
+### Notes
+Publishing commands:
+```sh
+npx vsce publish
+npx ovsx publish
 ```

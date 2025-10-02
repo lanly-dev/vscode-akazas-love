@@ -40,7 +40,7 @@ Akaza's Love contributes the following settings:
 All settings can be changed live in your VS Code settings (user or workspace) and take effect instantly.
 
 ## Acknowledgement
-- The artwork used in this extension is not mine. All rights and credit go to the original artist(s).
+The artwork used in this extension is not mine. All rights and credit go to the original artist(s).
 
 ## Release Notes
 

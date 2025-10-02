@@ -4,7 +4,7 @@ All notable changes to the "akazas-love" extension will be documented in this fi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[1.0.0] - 2025-10-01
+[1.0.0] - 2025-10-02
 - Initial release 🚀
 - Musical typing: keystrokes play MIDI notes or scales
 - Animated snow: snowflakes fall in editor and webview

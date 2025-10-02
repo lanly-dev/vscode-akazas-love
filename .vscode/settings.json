@@ -11,6 +11,10 @@
     "lanly",
     "rgba",
     "tonejs",
+    "vsixmanifest",
     "Yaiba"
-  ]
+  ],
+  "akazas-love.musicTyping": true,
+  "akazas-love.typingDriven": false,
+  "akazas-love.snowInEditor": true
 }

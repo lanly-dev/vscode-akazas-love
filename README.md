@@ -1,7 +1,8 @@
 # Akaza's Love
 
 Did you watch Demon Slayer: Kimetsu no Yaiba - The Movie: Infinity Castle?
-→ If you did, you already know what this extension is about! 🙂<a href="https://marketplace.visualstudio.com/items?itemName=lanly-dev.akazas-love" target="_blank">
+→ If you did, you already know what this extension is about! 🙂
+<a href="https://marketplace.visualstudio.com/items?itemName=lanly-dev.akazas-love" target="_blank">
   <img src='https://code.visualstudio.com/favicon.ico' width='13'/>
 </a>
 <a href="https://open-vsx.org/extension/lanly-dev/akazas-love" target="_blank">
@@ -12,6 +13,7 @@ Did you watch Demon Slayer: Kimetsu no Yaiba - The Movie: Infinity Castle?
 
 ❄️🌨️ Snow falls, each flake a memory aching in the heart \
 🎹🎶 Keystrokes sing, melodies rising to warm the soul \
+😢💔 Though inevitable tragedy may come, hope endures in every note \
 🎆🤗 Cherish each precious moment, let happiness gently unfold
 
 ## Extension Settings
@@ -36,6 +38,9 @@ Akaza's Love contributes the following settings:
 - `akazas-love.volume` (number, default: 0.1): Volume level for musical notes (0.0 to 1.0)
 
 All settings can be changed live in your VS Code settings (user or workspace) and take effect instantly.
+
+## Acknowledgement
+- The artwork used in this extension is not mine. All rights and credit go to the original artist(s).
 
 ## Release Notes
 

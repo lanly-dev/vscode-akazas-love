@@ -13,17 +13,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Webview panel: dedicated panel for snow animation and debug console
 - Live settings: all features update instantly when settings change
 - Status bar integration: toggle features from the VS Code status bar
-- 12 files, 7.02 MB, 1.104.0
+- 12 files, 7.06 MB, 1.104.0
 
 ```
-Done in 156ms
+Done in 328ms
 INFO  Files included in the VSIX:
 akazas-love-1.0.0.vsix
 ├─ [Content_Types].xml
 ├─ extension.vsixmanifest
 └─ extension/
    ├─ LICENSE.txt [1.06 KB]
-   ├─ changelog.md [0.73 KB]
+   ├─ changelog.md [1.36 KB]
    ├─ package.json [10.56 KB]
    ├─ readme.md [2.35 KB]
    ├─ dist/
@@ -31,7 +31,7 @@ akazas-love-1.0.0.vsix
    │  └─ index.html [3.74 KB]
    └─ media/
       ├─ akaza's-love-theme.mid [3.68 KB]
-      ├─ akaza.png [12.92 KB]
+      ├─ akaza.png [53.15 KB]
       ├─ akaza.svg [4.38 KB]
       └─ happy.png [6.98 MB]
 

@@ -328,8 +328,7 @@
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
-    "follow-redirects": "^1.15.11",
-    "ovsx": "^0.10.6"
+    "follow-redirects": "^1.15.11"
   },
   "devDependencies": {
     "@types/node": "24.x",
@@ -337,7 +336,8 @@
     "@vscode/vsce": "^3.6.2",
     "esbuild": "^0.25.10",
     "eslint": "^9.36.0",
-    "minify": "^14.1.0"
+    "minify": "^14.1.0",
+    "ovsx": "^0.10.6"
   },
   "repository": {
     "type": "git",

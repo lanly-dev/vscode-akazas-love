@@ -5,6 +5,8 @@ class SnowDecoration {
 
   #FPS = 15
 
+  #context
+  #disposables
   #editors
   #enabled
   #typingDriven
@@ -19,18 +21,15 @@ class SnowDecoration {
   #timer
   #typingRate
 
-  constructor() {
+  constructor(context) {
+    this.#context = context
     this.loadConfigs()
     this.#editors = new Map() // key: editor id -> { flakes: [], decType, maxColumns }
     this.#stopping = false
     this.#timer = null
     this.#typingRate = new TypingRate()
-    if (this.#enabled) this.start()
 
-    // Move to SnowEngine.js
-    // Listen for editor/range changes to reset flakes
-    vscode.window.onDidChangeActiveTextEditor(() => this.#setupEditors())
-    vscode.window.onDidChangeTextEditorVisibleRanges(() => this.#setupEditors())
+    if (this.#enabled) this.start()
   }
 
   loadConfigs() {
@@ -63,7 +62,7 @@ class SnowDecoration {
       // console.trace('SnowDecoration already started')
       return
     }
-    this.#setupEditors()
+    this.setupEditors()
     const dt = 1 / this.#FPS
     this.#timer = setInterval(() => { this.#tick(dt) }, Math.floor(1000 / this.#FPS))
   }
@@ -71,6 +70,11 @@ class SnowDecoration {
   stop() {
     // console.log('SnowDecoration stop')
     this.#stopping = true
+  }
+
+  dispose() {
+    // Necessary to dispose timer?
+    console.log('SnowDecoration dispose')
   }
 
   addFlake() {
@@ -93,6 +97,41 @@ class SnowDecoration {
         opacity: 0.6 + Math.random() * 0.4,
         v: 0.7 + Math.random() * 0.75
       })
+    })
+  }
+
+  /**
+ * Set up snowflake models and decorations for all visible editors.
+ * Disposes old decorations, creates new ones, and spawns flakes for each editor.
+ * Called on activation and whenever visible editors or ranges change.
+ */
+  setupEditors() {
+    if (!this.#enabled) return
+
+    // Dispose old decorations
+    for (const { decType } of this.#editors.values()) decType.dispose()
+    this.#editors.clear()
+
+    vscode.window.visibleTextEditors.forEach(editor => {
+      if (editor.document.uri.scheme !== 'file') return
+      const decType = vscode.window.createTextEditorDecorationType({
+        rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen,
+        before: {
+          contentText: '❄',
+          color: this.#color,
+          fontWeight: 'normal'
+        }
+      })
+      const key = editor.document.uri.toString()
+      const model = { decType, flakes: [], maxColumns: this.#maxColumns }
+      this.#editors.set(key, model)
+      // Spawn flakes for this editor
+      const vis = editor.visibleRanges[0]
+      const top = vis && vis.start ? vis.start.line : 0
+      const bottom = vis && vis.end ? vis.end.line : Math.min(editor.document.lineCount - 1, 40)
+      const linesVisible = Math.max(1, bottom - top)
+      if (!this.#typingDriven) this.#ensureFlakeCount(editor, model, linesVisible)
+      this.#renderEditor(editor, model)
     })
   }
 
@@ -174,42 +213,6 @@ class SnowDecoration {
         }
       }
       if (!this.#typingDriven) this.#ensureFlakeCount(editor, model)
-      this.#renderEditor(editor, model)
-    })
-  }
-
-  /**
-   * Set up snowflake models and decorations for all visible editors.
-   * Disposes old decorations, creates new ones, and spawns flakes for each editor.
-   * Called on activation and whenever visible editors or ranges change.
-   * @private
-   */
-  #setupEditors() {
-    if (!this.#enabled) return
-
-    // Dispose old decorations
-    for (const { decType } of this.#editors.values()) decType.dispose()
-    this.#editors.clear()
-
-    vscode.window.visibleTextEditors.forEach(editor => {
-      if (editor.document.uri.scheme !== 'file') return
-      const decType = vscode.window.createTextEditorDecorationType({
-        rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen,
-        before: {
-          contentText: '❄',
-          color: this.#color,
-          fontWeight: 'normal'
-        }
-      })
-      const key = editor.document.uri.toString()
-      const model = { decType, flakes: [], maxColumns: this.#maxColumns }
-      this.#editors.set(key, model)
-      // Spawn flakes for this editor
-      const vis = editor.visibleRanges[0]
-      const top = vis && vis.start ? vis.start.line : 0
-      const bottom = vis && vis.end ? vis.end.line : Math.min(editor.document.lineCount - 1, 40)
-      const linesVisible = Math.max(1, bottom - top)
-      if (!this.#typingDriven) this.#ensureFlakeCount(editor, model, linesVisible)
       this.#renderEditor(editor, model)
     })
   }

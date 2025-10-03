@@ -1,6 +1,6 @@
 const {
   workspace: { getConfiguration, onDidChangeConfiguration, onDidChangeTextDocument },
-  window: { onDidChangeActiveColorTheme, setStatusBarMessage }
+  window: { onDidChangeActiveColorTheme, onDidChangeActiveTextEditor, onDidChangeTextEditorVisibleRanges, setStatusBarMessage }
 } = require('vscode')
 const SnowDecoration = require('./SnowDecoration')
 
@@ -11,6 +11,8 @@ class SnowEngine {
 
   static init(context, webviewProvider) {
     this.#snowDecoration = new SnowDecoration(context)
+    // Dispose timer?
+    // context.subscriptions.push(this.#snowDecoration)
     this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
     this.#webviewProvider = webviewProvider
     this.#setupListeners(context)
@@ -44,12 +46,6 @@ class SnowEngine {
       }
     })
 
-    // eslint-disable-next-line no-unused-vars
-    const d2c = onDidChangeActiveColorTheme((e) => {
-      this.#snowDecoration.loadConfigs()
-      this.#webviewProvider.reloadConfigs()
-    })
-
     const d3 = onDidChangeConfiguration(e => {
       if (!e.affectsConfiguration('akazas-love.typingDriven')) return
       try {
@@ -63,7 +59,11 @@ class SnowEngine {
       }
     })
 
-    const d4 = onDidChangeTextDocument(() => {
+    // Need to note why calling setupEditors but not loadConfigs
+    const d4 = onDidChangeActiveTextEditor(() => this.#snowDecoration.setupEditors())
+    const d5 = onDidChangeTextEditorVisibleRanges(() => this.#snowDecoration.setupEditors())
+
+    const d6 = onDidChangeTextDocument(() => {
       if (!this.#typingDriven) return
       try {
         this.#snowDecoration.addFlake()
@@ -72,7 +72,13 @@ class SnowEngine {
         console.error('Error in text document change handler:', error)
       }
     })
-    context.subscriptions.concat([d1, d2a, d2b, d3, d4])
+
+    // eslint-disable-next-line no-unused-vars
+    const d7 = onDidChangeActiveColorTheme((e) => {
+      this.#snowDecoration.loadConfigs()
+      this.#webviewProvider.reloadConfigs()
+    })
+    context.subscriptions.push(d1, d2a, d2b, d3, d4, d5, d6, d7)
   }
 }
 

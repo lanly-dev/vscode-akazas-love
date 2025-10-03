@@ -2,12 +2,11 @@
   "name": "akazas-love",
   "displayName": "Akaza's Love - Musical Typing 🎶 and Falling Snow ❄️",
   "description": "Transform your typing into beautiful melody and animated snowfall",
-  "version": "1.0.0",
   "publisher": "lanly-dev",
+  "version": "1.0.0",
   "sponsor": {
     "url": "https://github.com/sponsors/lanly-dev"
   },
-  "icon": "media/akaza.png",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -19,8 +18,10 @@
     "anime",
     "demon slayer",
     "happy",
+    "hakuji",
     "infinity castle",
     "kimetsu no yaiba",
+    "koyuki",
     "melody",
     "music",
     "musical typing",
@@ -30,6 +31,11 @@
     "snowflakes",
     "typing sound"
   ],
+  "icon": "media/akaza.png",
+  "galleryBanner": {
+    "color": "#fff",
+    "theme": "light"
+  },
   "activationEvents": [
     "onStartupFinished"
   ],

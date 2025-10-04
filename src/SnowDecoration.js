@@ -6,7 +6,6 @@ class SnowDecoration {
   #FPS = 15
 
   #context
-  #disposables
   #editors
   #enabled
   #typingDriven
@@ -73,8 +72,20 @@ class SnowDecoration {
   }
 
   dispose() {
-    // Necessary to dispose timer?
     console.log('SnowDecoration dispose')
+    this.#stopping = false
+    if (this.#timer) {
+      clearInterval(this.#timer)
+      this.#timer = null
+    }
+    for (const { decType } of this.#editors.values()) {
+      try {
+        decType.dispose()
+      } catch (error) {
+        console.error('Error disposing snow decoration:', error)
+      }
+    }
+    this.#editors.clear()
   }
 
   addFlake() {
@@ -202,13 +213,7 @@ class SnowDecoration {
         // If stopping and all flakes are out of view, clear decorations
         const allOutOfView = model.flakes.every(flake => flake.y > bottom + 2)
         if (allOutOfView) {
-          if (this.#timer) {
-            clearInterval(this.#timer)
-            this.#timer = null
-          }
-          for (const { decType } of this.#editors.values()) decType.dispose()
-          this.#editors.clear()
-          this.#stopping = false
+          this.dispose()
           return
         }
       }

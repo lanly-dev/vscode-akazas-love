@@ -11,8 +11,6 @@ class SnowEngine {
 
   static init(context, webviewProvider) {
     this.#snowDecoration = new SnowDecoration(context)
-    // Dispose timer?
-    // context.subscriptions.push(this.#snowDecoration)
     this.#typingDriven = getConfiguration('akazas-love').get('typingDriven')
     this.#webviewProvider = webviewProvider
     this.#setupListeners(context)
@@ -78,7 +76,7 @@ class SnowEngine {
       this.#snowDecoration.loadConfigs()
       this.#webviewProvider.reloadConfigs()
     })
-    context.subscriptions.push(d1, d2a, d2b, d3, d4, d5, d6, d7)
+    context.subscriptions.push(this.#snowDecoration, d1, d2a, d2b, d3, d4, d5, d6, d7)
   }
 }
 

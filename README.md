@@ -1,4 +1,5 @@
 # Akaza's Love
+Musical Typing 🎶 and Falling Snow ❄️
 
 Did you watch Demon Slayer: Kimetsu no Yaiba - The Movie: Infinity Castle?
 → If you did, you already know what this extension is about! 🙂

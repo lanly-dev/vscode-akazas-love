@@ -126,6 +126,7 @@ class Speaker {
     else vscode.window.showInformationMessage('No active play process to stop')
   }
 
+  // Error on binary is in used by something even after killed all processes
   static async redownloadPlayBuffer(context) {
     await Speaker.#downloadPlayBuffer(context, true)
   }

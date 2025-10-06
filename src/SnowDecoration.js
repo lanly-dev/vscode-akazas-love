@@ -3,7 +3,7 @@ const TypingRate = require('./TypingRate')
 
 class SnowDecoration {
 
-  #FPS = 15
+  #FPS = 8
 
   #context
   #editors
@@ -117,6 +117,7 @@ class SnowDecoration {
  * Called on activation and whenever visible editors or ranges change.
  */
   setupEditors() {
+    console.log('SnowDecoration setupEditors')
     if (!this.#enabled) return
 
     // Dispose old decorations
@@ -257,7 +258,12 @@ class SnowDecoration {
           v: 0.7 + Math.random() * 0.75
         })
       }
-    } else if (cur > target) model.flakes.splice(target)
+    } else if (cur > target) {
+      // Interestingly, this is never called
+      // Add a message to see if it actually show up in practice
+      vscode.window.setStatusBarMessage(`Snow: removed ${cur - target} flakes, this is a 🐞!`, 3000)
+      model.flakes.splice(target)
+    }
   }
 
   /**

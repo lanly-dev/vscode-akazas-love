@@ -57,9 +57,17 @@ class SnowEngine {
       }
     })
 
-    // Need to note why calling setupEditors but not loadConfigs
+    // Simple debounce: only call setupEditors if at least 1s since last call
+    let vrLast = 0
+    const DEBOUNCE_INTERVAL = 1000
+    // Could apply for d4 but doesn't work, vscode slow to update active editor than its event?
     const d4 = onDidChangeActiveTextEditor(() => this.#snowDecoration.setupEditors())
-    const d5 = onDidChangeTextEditorVisibleRanges(() => this.#snowDecoration.setupEditors())
+    const d5 = onDidChangeTextEditorVisibleRanges(() => {
+      const now = Date.now()
+      if (now - vrLast <= DEBOUNCE_INTERVAL) return
+      vrLast = now
+      this.#snowDecoration.setupEditors()
+    })
 
     const d6 = onDidChangeTextDocument(() => {
       if (!this.#typingDriven) return

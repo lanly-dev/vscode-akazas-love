@@ -2,7 +2,7 @@
 Musical Typing 🎶 and Falling Snow ❄️
 
 Did you watch Demon Slayer: Kimetsu no Yaiba - The Movie: Infinity Castle?
-→ If you did, you already know what this extension is about! 🙂
+→ If you did, you already know what this extension is about! 👺
 <a href="https://marketplace.visualstudio.com/items?itemName=lanly-dev.akazas-love" target="_blank">
   <img src='https://code.visualstudio.com/favicon.ico' width='13'/>
 </a>
@@ -44,6 +44,9 @@ All settings can be changed live in your VS Code settings (user or workspace) an
 The artwork used in this extension is not mine. All rights and credit go to the original artist(s).
 
 ## Release Notes
+
+### 1.0.1
+Fixed performance issues with snow-in-editor effect
 
 ### 1.0.0
 

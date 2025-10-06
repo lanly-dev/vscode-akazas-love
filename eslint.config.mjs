@@ -14,6 +14,7 @@ export default [
     },
     rules: {
       'comma-dangle': ['error', 'never'],
+      'eol-last': ['error', 'always'],
       'no-throw-literal': 'warn',
       'quote-props': ['error', 'as-needed'],
       'constructor-super': 'warn',

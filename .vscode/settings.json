@@ -1,4 +1,7 @@
 {
+  "akazas-love.musicTyping": true,
+  "akazas-love.snowInEditor": false,
+  "akazas-love.typingDriven": true,
   "cSpell.words": [
     "akaza",
     "Akaza's",
@@ -15,7 +18,5 @@
     "vsixmanifest",
     "Yaiba"
   ],
-  "akazas-love.musicTyping": true,
-  "akazas-love.typingDriven": true,
-  "akazas-love.snowInEditor": false
+  "files.insertFinalNewline": true
 }

@@ -4,7 +4,7 @@ All notable changes to the "Akaza's Love" extension will be documented in this f
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [1.0.0] - 2025-10-05
+## [1.0.1] - 2025-10-05
 - Fixed editor unresponsiveness after extended use or heavy scrolling with snow-in-editor effect
    - Changed FPS from 15 to 8
    - Scrolling debounce
